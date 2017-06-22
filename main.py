@@ -148,6 +148,17 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 			pass
 
 
+def gen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
+	"""" Wrapper for datagen, taking only steering angle"""
+	for data_row in datagen(data_dir, time_len, batch_size, ignore_goods):
+		X, Y, _ = data_row
+		Y = Y[:, -1]
+		if X.shape[1] == 1:  # no temporal context
+			X = X[:, -1]
+		yield X, Y
+
+
+
 def get_model(time_len=1):
 	ch, row, col = 3, 160, 320  # camera format
 
@@ -211,12 +222,14 @@ if __name__ == "__main__":
 	model = get_model()
 
 	#Setup generator for getting batched data
-	gen_train = datagen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
-	gen_val = datagen(FLAGS.val_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
+	gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
+	gen_val = gen(FLAGS.val_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 
 
 	print("HEEEEEEEERE")
-	print(gen_train.next())
+	print(gen_train.next()[0])
+	print("Printing val sample")
+	print(gen_val.next()[0])
 
 	model.fit_generator(
 		gen_train,
