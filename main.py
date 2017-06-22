@@ -9,7 +9,7 @@ import json
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, Lambda, ELU
 from keras.layers.convolutional import Convolution2D
-
+from keras.callbacks import TensorBoard
 
 #tport 
 from tensorport import TensorportClient as tport
@@ -158,7 +158,6 @@ def gen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 		yield X, Y
 
 
-
 def get_model(time_len=1):
 	ch, row, col = 3, 160, 320  # camera format
 
@@ -184,7 +183,6 @@ def get_model(time_len=1):
 	return model
 
 
-
 if __name__ == "__main__":
 
 	#tport
@@ -207,7 +205,7 @@ if __name__ == "__main__":
 		"train_data_dir",
 		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/training'),
 		"""Path to training dataset. It is recommended to use get_data_path() 
-		to define your data directory. If you set your dataset directory manually makue sure to use /data/ 
+		to define your data directory. If you set your dataset directory manually make sure to use /data/ 
 		as root path when running on TensorPort cloud."""
 		)
 	flags.DEFINE_string(
@@ -215,8 +213,12 @@ if __name__ == "__main__":
 		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/validation'),
 		"Path to validation dataset."
 		)
-
-
+	flags.DEFINE_string("logs_dir",
+                    tport().get_logs_path(root=PATH_TO_LOCAL_LOGS),
+                    "Path to store logs and checkpoints. It is recommended"
+                    "to use get_logs_path() to define your logs directory."
+                    "If you set your logs directory manually make sure"
+                    "to use /logs/ when running on TensorPort cloud.")
 
 	# Model
 	model = get_model()
@@ -225,18 +227,20 @@ if __name__ == "__main__":
 	gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 	gen_val = gen(FLAGS.val_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 
+	# Setup tensorboard
 
-	print("HEEEEEEEERE")
-	print(gen_train.next()[0])
-	print("Printing val sample")
-	print(gen_val.next()[0])
+	if not os.path.exists(FLAGS.logs_dir): #maybe we need to add that dir creation in get_logs_path
+		os.makedirs(FLAGS.logs_dir)
+	board = TensorBoard(log_dir=FLAGS.logs_dir, histogram_freq=0,  
+          write_graph=True, write_images=True)
 
 	model.fit_generator(
 		gen_train,
 		samples_per_epoch=FLAGS.epoch_size,
 		nb_epoch=FLAGS.nb_epochs,
 		validation_data=gen_val, #gen(20, args.host, port=args.val_port)
-		nb_val_samples=FLAGS.nb_val_samples #args.val_sample
+		nb_val_samples=FLAGS.nb_val_samples, #args.val_sample
+		callbacks = [board]
 	)
 
 	print("Saving model weights and configuration file.")
@@ -247,23 +251,3 @@ if __name__ == "__main__":
 	model.save_weights("./outputs/steering_model/steering_angle.keras", True)
 	with open('./outputs/steering_model/steering_angle.json', 'w') as outfile:
 		json.dump(model.to_json(), outfile)
-
-
-
-#TODO: fix directory thing: datagen currently takes as input a list of file, and I give it a directory.
-#Needs to modify so that data_gen takes a directory and gets the list of files (with all necessary prefix)
-
-
-
-#Might need to rebuild it using this:
-# def generator(features, labels, batch_size):
-# # Create empty arrays to contain batch of features and labels#
-# 	batch_features = np.zeros((batch_size, 64, 64, 3))
-# 	batch_labels = np.zeros((batch_size,1))
-# while True:
-# 	for i in range(batch_size):
-# 		# choose random index in features
-# 		index = random.choice(len(features),1)
-# 		batch_features[i] = some_processing(features[index])
-# 		batch_labels[i] = labels[index]
-# 	yield batch_features, batch_labels
