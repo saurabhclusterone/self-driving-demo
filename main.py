@@ -130,7 +130,7 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 			# sanity check
 			assert X_batch.shape == (batch_size, time_len, 3, 160, 320)
 
-			logging.debug("loading image took: {}s".format(time.time()-t))
+			# logging.debug("loading image took: {}s".format(time.time()-t))
 			# print("%5.2f ms" % ((time.time()-start)*1000.0))
 
 			if first:
@@ -234,8 +234,7 @@ if __name__ == "__main__":
 	board = TensorBoard(log_dir=FLAGS.logs_dir, histogram_freq=0,  
           write_graph=True, write_images=True)
 
-	print(gen_train.next())
-
+	# import pdb; pdb.set_trace()
 	model.fit_generator(
 		gen_train,
 		samples_per_epoch=FLAGS.epoch_size,
