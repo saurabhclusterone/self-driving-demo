@@ -130,8 +130,8 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 			# sanity check
 			assert X_batch.shape == (batch_size, time_len, 3, 160, 320)
 
-			logging.debug("load image : {}s".format(time.time()-t))
-			print("%5.2f ms" % ((time.time()-start)*1000.0))
+			logging.debug("loading image took: {}s".format(time.time()-t))
+			# print("%5.2f ms" % ((time.time()-start)*1000.0))
 
 			if first:
 				print "X", X_batch.shape
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
 	#tport
 	PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/research/logs/')
-	ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/research/dataset')
+	ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/research')
 
 
 	flags = tf.app.flags
@@ -203,14 +203,14 @@ if __name__ == "__main__":
 	flags.DEFINE_boolean("nogood",False,"Ignore `goods` filters.")
 	flags.DEFINE_string(
 		"train_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/training'),
+		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='comma-light2/camera/training'),
 		"""Path to training dataset. It is recommended to use get_data_path() 
 		to define your data directory. If you set your dataset directory manually make sure to use /data/ 
 		as root path when running on TensorPort cloud."""
 		)
 	flags.DEFINE_string(
 		"val_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/validation'),
+		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='comma-light2/camera/validation'),
 		"Path to validation dataset."
 		)
 	flags.DEFINE_string("logs_dir",
@@ -233,6 +233,8 @@ if __name__ == "__main__":
 		os.makedirs(FLAGS.logs_dir)
 	board = TensorBoard(log_dir=FLAGS.logs_dir, histogram_freq=0,  
           write_graph=True, write_images=True)
+
+	print(gen_train.next())
 
 	model.fit_generator(
 		gen_train,
