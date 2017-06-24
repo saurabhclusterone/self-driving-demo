@@ -216,6 +216,20 @@ def get_loss(predictions,labels):
 
 
 
+def variable_summaries(var):
+ 	"""Attach a lot of summaries to a Tensor (for TensorBoard visualization).
+	credits: https://www.tensorflow.org/get_started/summaries_and_tensorboard
+ 	"""
+ 	with tf.name_scope('summaries'):
+		mean = tf.reduce_mean(var)
+		tf.summary.scalar('mean', mean)
+		with tf.name_scope('stddev'):
+			stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+		tf.summary.scalar('stddev', stddev)
+		tf.summary.scalar('max', tf.reduce_max(var))
+		tf.summary.scalar('min', tf.reduce_min(var))
+		tf.summary.histogram('histogram', var)
+
 
 if __name__ == "__main__":
 
@@ -349,6 +363,9 @@ if __name__ == "__main__":
 
 		predictions = get_model(X)
 		loss = get_loss(predictions,Y)
+		tf.summary.scalar('loss', loss)#add to tboard
+		for var in tf.trainable_variables():
+			tf.summary.histogram(var.name,var)
 
 		#Batch generators
 		gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
@@ -359,11 +376,12 @@ if __name__ == "__main__":
 		# optimizer = tf.train.AdamOptimizer(learning_rate = 1e-3)
 		# train_step = optimizer.minimize(loss)
 		
-		
 		train_step = (
 			tf.train.AdamOptimizer(learning_rate)
 			.minimize(loss, global_step=global_step)
 			)
+
+		merged_summary = tf.summary.merge_all()
 
 	hooks=[tf.train.StopAtStepHook(last_step=FLAGS.nb_train_step)]
 
@@ -372,13 +390,23 @@ if __name__ == "__main__":
 		checkpoint_dir=FLAGS.logs_dir,
 		hooks = hooks) as sess:
 
+		train_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
+		i = 0
 		while not sess.should_stop():
+			i+=1
 			batch_train = gen_train.next()
 
 			feed_dict = {X: batch_train[0],
 							Y: batch_train[1]}
 
-			variables = [loss,train_step]
-			current_loss, _ = sess.run(variables, feed_dict)
-			print("Batch loss: %s", current_loss)
+			variables = [loss, merged_summary, train_step]
+			current_loss, summary,  _ = sess.run(variables, feed_dict)
+
+			train_writer.add_summary(summary,i)
+
+			print("Batch loss: %s" % current_loss)
+
+		#At the end of the training we compute the accuracy:
+
 		
+
