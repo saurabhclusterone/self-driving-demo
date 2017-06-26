@@ -288,15 +288,18 @@ if __name__ == "__main__":
 						"Comma-separated list of hostname:port pairs")
 	flags.DEFINE_string("worker_hosts", worker_hosts,
 						"Comma-separated list of hostname:port pairs")
+
 	# end of tport snippet 2
 
 	# Model flags
 	flags.DEFINE_integer("batch",256,"Batch size")
 	flags.DEFINE_integer("time",1,"Number of frames per sample")
 	flags.DEFINE_integer("nb_train_step",100000,"Number of training steps")
+	flags.DEFINE_integer("val_every", 1000,
+						"Compute validation accuracy every n steps")
 	# flags.DEFINE_integer("nb_epochs",2,"Number of epochs")
 	# flags.DEFINE_integer("epoch_size",10,"Size of epochs")
-	# flags.DEFINE_integer("nb_val_batches",1,"Number of validation batches")
+	# flags.DEFINE_integer("nb_val_batches",20,"Number of validation batches")
 	flags.DEFINE_float("dropout_rate1",.2,"Dropout rate on first dropout layer")
 	flags.DEFINE_float("dropout_rate2",.5,"Dropout rate on second dropout layer")
 	flags.DEFINE_float("starter_lr",1e-3,"Starter learning rate. Exponential decay is applied")
@@ -363,16 +366,17 @@ if __name__ == "__main__":
 
 		predictions = get_model(X)
 		loss = get_loss(predictions,Y)
-		tf.summary.scalar('loss', loss)#add to tboard
-		for var in tf.trainable_variables():
-			tf.summary.histogram(var.name,var)
+		training_summary = tf.summary.scalar('Training_Loss', loss)#add to tboard
+		validation_summary = tf.summary.scalar('Validation_Loss', loss)
+		# for var in tf.trainable_variables():
+		# 	tf.summary.histogram(var.name,var)
 
 		#Batch generators
 		gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 		gen_val = gen(FLAGS.val_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 
 		global_step = tf.contrib.framework.get_or_create_global_step()
-		learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,100000, 0.96, staircase=True)
+		learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,1000, 0.96, staircase=True)
 		# optimizer = tf.train.AdamOptimizer(learning_rate = 1e-3)
 		# train_step = optimizer.minimize(loss)
 		
@@ -381,7 +385,6 @@ if __name__ == "__main__":
 			.minimize(loss, global_step=global_step)
 			)
 
-		merged_summary = tf.summary.merge_all()
 
 	hooks=[tf.train.StopAtStepHook(last_step=FLAGS.nb_train_step)]
 
@@ -390,23 +393,32 @@ if __name__ == "__main__":
 		checkpoint_dir=FLAGS.logs_dir,
 		hooks = hooks) as sess:
 
-		train_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
-		i = 0
+		summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
+		e = 1
+		i = 1
 		while not sess.should_stop():
-			i+=1
+			
 			batch_train = gen_train.next()
 
 			feed_dict = {X: batch_train[0],
 							Y: batch_train[1]}
 
-			variables = [loss, merged_summary, train_step]
-			current_loss, summary,  _ = sess.run(variables, feed_dict)
+			variables = [loss, training_summary, learning_rate, train_step]
+			current_loss, t_summary, lr, _ = sess.run(variables, feed_dict)
+			summary_writer.add_summary(t_summary,i)
+			print("Epoch %s, iteration %s - Learning Rate: %f, Batch loss: %s" % (e,i,lr,current_loss))
+			i+=1
+			# Validation once in a while
+			if i % FLAGS.val_every == 0: #Not clean. This is eating on the training steps
+				e+1
+				batch_val = gen_val.next()
 
-			train_writer.add_summary(summary,i)
+				feed_dict = {X: batch_val[0],
+							Y: batch_val[1]}
 
-			print("Batch loss: %s" % current_loss)
+				variables = [loss, validation_summary]
+				current_loss, v_summary = sess.run(variables, feed_dict)
+				summary_writer.add_summary(v_summary,i)
+				print("... Epoch %s - Validation loss: %s" % (e,current_loss))
 
-		#At the end of the training we compute the accuracy:
-
-		
 
