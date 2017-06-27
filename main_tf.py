@@ -38,8 +38,8 @@ if __name__ == "__main__":
 
 	#Path to your data locally. This will enable to run the model both locally and on 
 	# tensorport without changes
-	PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/research/logs/')
-	ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/research')
+	PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/tensorport-self-driving-demo/logs/')
+	ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/comma/comma-data/')
 	#end of tport snippet 1
 
 
@@ -51,24 +51,24 @@ if __name__ == "__main__":
 
 	#Define the path from the root data directory to your data.
 	# Here the data directory are split into training and validation, so defining two flags
-	flags.DEFINE_string(
-		"train_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='comma-light2/camera/training'),
-		"""Path to training dataset. It is recommended to use get_data_path() 
-		to define your data directory. If you set your dataset directory manually make sure to use /data/ 
-		as root path when running on TensorPort cloud."""
-		)
-	flags.DEFINE_string(
-		"val_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='comma-light2/camera/validation'),
-		"Path to validation dataset."
-		)
-	flags.DEFINE_string("logs_dir",
-		tport().get_logs_path(root=PATH_TO_LOCAL_LOGS),
-		"Path to store logs and checkpoints. It is recommended"
-		"to use get_logs_path() to define your logs directory."
-		"If you set your logs directory manually make sure"
-		"to use /logs/ when running on TensorPort cloud.")
+	# flags.DEFINE_string(
+	# 	"train_data_dir",
+	# 	tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='/camera/training'),
+	# 	"""Path to training dataset. It is recommended to use get_data_path() 
+	# 	to define your data directory. If you set your dataset directory manually make sure to use /data/ 
+	# 	as root path when running on TensorPort cloud."""
+	# 	)
+	# flags.DEFINE_string(
+	# 	"val_data_dir",
+	# 	tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='/camera/validation'),
+	# 	"Path to validation dataset."
+	# 	)
+	# flags.DEFINE_string("logs_dir",
+	# 	tport().get_logs_path(root=PATH_TO_LOCAL_LOGS),
+	# 	"Path to store logs and checkpoints. It is recommended"
+	# 	"to use get_logs_path() to define your logs directory."
+	# 	"If you set your logs directory manually make sure"
+	# 	"to use /logs/ when running on TensorPort cloud.")
 	flags.DEFINE_string("job_name", job_name,
 						"job name: worker or ps")
 	flags.DEFINE_integer("task_index", task_index,
@@ -82,22 +82,37 @@ if __name__ == "__main__":
 
 	# end of tport snippet 2
 
-	# Model flags
+
+	#DEBUG
+	flags.DEFINE_string("train_data_dir","/Users/malo/Documents/comma/comma-data/camera/training","")
+	flags.DEFINE_string("val_data_dir","/Users/malo/Documents/comma/comma-data/camera/validation","")
+	flags.DEFINE_string("logs_dir","/Users/malo/Documents/tensorport-self-driving-demo/logs","")
+
+
+
+	# Training flags
 	flags.DEFINE_integer("batch",256,"Batch size")
 	flags.DEFINE_integer("time",1,"Number of frames per sample")
-	flags.DEFINE_integer("nb_train_step",100000,"Number of training steps")
-	flags.DEFINE_integer("val_every", 1000,
-						"Compute validation accuracy every n steps")
-	# flags.DEFINE_integer("nb_epochs",2,"Number of epochs")
-	# flags.DEFINE_integer("epoch_size",10,"Size of epochs")
-	# flags.DEFINE_integer("nb_val_batches",20,"Number of validation batches")
+	flags.DEFINE_integer("steps_per_epoch",10000,"Number of training steps per epoch")
+	flags.DEFINE_integer("nb_val_steps",1,"Number of training steps")
+	flags.DEFINE_integer("nb_epochs",10,"Number of epochs")
+
+
+	# Model flags
+
+
+
+
 	flags.DEFINE_float("dropout_rate1",.2,"Dropout rate on first dropout layer")
 	flags.DEFINE_float("dropout_rate2",.5,"Dropout rate on second dropout layer")
 	flags.DEFINE_float("starter_lr",1e-3,"Starter learning rate. Exponential decay is applied")
 	flags.DEFINE_integer("fc_dim",512,"Size of the dense layer")
 	flags.DEFINE_boolean("nogood",False,"Ignore `goods` filters.")
 
-	
+	print(ROOT_PATH_TO_LOCAL_DATA)
+	print(FLAGS.train_data_dir)
+	print()
+	print(tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='/camera/training'))
 	# tport snippet 3: configure distributed
 	def device_and_target():
 		# If FLAGS.job_name is not set, we're running single-machine TensorFlow.
@@ -149,13 +164,13 @@ if __name__ == "__main__":
 
 	# print(FLAGS.train_data_dir)
 
-	
+	# Define graph
 	with tf.device(device):
 		X = tf.placeholder(tf.float32, [FLAGS.batch, 3, 160, 320])
 		Y = tf.placeholder(tf.float32,[FLAGS.batch,1]) # angle only
 		# global_step = tf.Variable(0, trainable=False)	
 
-		predictions = get_model(X)
+		predictions = get_model(X,FLAGS)
 		loss = get_loss(predictions,Y)
 		training_summary = tf.summary.scalar('Training_Loss', loss)#add to tboard
 		validation_summary = tf.summary.scalar('Validation_Loss', loss)
@@ -176,32 +191,62 @@ if __name__ == "__main__":
 			.minimize(loss, global_step=global_step)
 			)
 
+	#TODO: we're defining functions inside the main to avoir having a large nb of parameters to run_train_epoch. Not that clean.
 
-	hooks=[tf.train.StopAtStepHook(last_step=FLAGS.nb_train_step)]
+	def run_train_epoch(target,gen_train,FLAGS,epoch_index):
+		"""Restores the last checkpoint and runs a training epoch
+		Inputs:
+			- target: device setter for distributed work
+			- FLAGS: 
+				- requires FLAGS.logs_dir from which the model will be restored. 
+				Note that whatever most recent checkpoint from that directory will be used.
+				- requires FLAGS.steps_per_epoch
+			- gen_train: training data generator
+			- epoch_index: index of current epoch
+		"""
 
-	with tf.train.MonitoredTrainingSession(master=target,
+		hooks=[tf.train.StopAtStepHook(last_step=FLAGS.steps_per_epoch*epoch_index)] # Increment number of required training steps
+		i = 1
+
+		with tf.train.MonitoredTrainingSession(master=target,
 		is_chief=(FLAGS.task_index == 0),
 		checkpoint_dir=FLAGS.logs_dir,
 		hooks = hooks) as sess:
 
-		summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
-		e = 1
-		i = 1
-		while not sess.should_stop():
-			
-			batch_train = gen_train.next()
+			summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
+			while not sess.should_stop():
+				batch_train = gen_train.next()
 
-			feed_dict = {X: batch_train[0],
-							Y: batch_train[1]}
+				feed_dict = {X: batch_train[0],
+								Y: batch_train[1]}
 
-			variables = [loss, training_summary, learning_rate, train_step]
-			current_loss, t_summary, lr, _ = sess.run(variables, feed_dict)
-			summary_writer.add_summary(t_summary,i)
-			print("Epoch %s, iteration %s - Learning Rate: %f, Batch loss: %s" % (e,i,lr,current_loss))
-			i+=1
-			# Validation once in a while
-			if i % FLAGS.val_every == 0: #Not clean. This is eating on the training steps
-				e+1
+				variables = [loss, training_summary, learning_rate, train_step]
+				current_loss, t_summary, lr, _ = sess.run(variables, feed_dict)
+				summary_writer.add_summary(t_summary,i)
+				# print("Epoch %s, iteration %s - Learning Rate: %f, Batch loss: %s" % (e,i,lr,current_loss))
+				print("Iteration %s - Batch loss: %s" % (epoch_index*FLAGS.steps_per_epoch + i,current_loss))
+				i+=1
+
+	#Left to the reader - that could be done in a continuous fashion on a separate worker / thread
+	#Actually is that the best thing? Sounds like validation does not increase the hook counter ....
+	def run_val(target,gen_val,FLAGS):
+		"""Restores the last checkpoint and runs validation
+		Inputs:
+			- target: device setter for distributed work
+			- FLAGS: 
+				- requires FLAGS.logs_dir from which the model will be restored. 
+				Note that whatever most recent checkpoint from that directory will be used.
+			- gen_val: validation data generator
+		"""
+		hooks=[tf.train.StopAtStepHook(last_step=1)]
+
+		with tf.train.MonitoredTrainingSession(master=target,
+			is_chief=(FLAGS.task_index == 0),
+			checkpoint_dir=FLAGS.logs_dir,
+			hooks = hooks) as sess:
+
+			summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
+			while not sess.should_stop():
 				batch_val = gen_val.next()
 
 				feed_dict = {X: batch_val[0],
@@ -209,9 +254,17 @@ if __name__ == "__main__":
 
 				variables = [loss, validation_summary]
 				current_loss, v_summary = sess.run(variables, feed_dict)
-				summary_writer.add_summary(v_summary,i)
-				print("... Epoch %s - Validation loss: %s" % (e,current_loss))
-				i = 1 # resetting iteration counters
-				e += 1 # updating epoch number
+				summary_writer.add_summary(v_summary,1)
+				print("Validation loss: %s" % (current_loss))
 
 
+	for e in range(FLAGS.nb_epochs):
+		run_train_epoch(target,gen_train,FLAGS,e)
+		run_val(target,gen_train,FLAGS)
+
+
+
+
+		
+
+	

@@ -12,10 +12,12 @@ import json
 # Original License in LICENSE_COMMA
 
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def concatenate(camera_names, time_len):
-	logs_names = [x.replace('camera', 'log') for x in camera_names]
+	logs_names = [x.replace('camera', 'labels') for x in camera_names]
 
 	angle = []  # steering angle of the car
 	speed = []  # steering angle of the car

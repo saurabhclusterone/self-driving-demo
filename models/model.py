@@ -7,8 +7,11 @@ import traceback
 import tensorflow as tf
 import json
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-def get_model(X):
+
+def get_model(X, FLAGS):
 	#ch, row, col = 3, 160, 320
 	#Add the lambda here. Is it a mean substraction?
 
@@ -65,7 +68,7 @@ def get_model(X):
 def get_loss(predictions,labels):
 	# loss = tf.nn.l2_loss(predictions-labels)
 	loss = tf.reduce_mean(tf.square(predictions-labels))
-	return los
+	return loss
 
 
 def variable_summaries(var):
