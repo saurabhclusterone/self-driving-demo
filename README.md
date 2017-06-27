@@ -1,5 +1,16 @@
 # Demo of a self-driving car steering model for Tensorport
 
+This is a demo of a self-steering car model for the tensorport deep learning computation platform.
+
+
+## Run locally
+Make sure you have the proper TensorFlow environment.
+Set PATH_TO_LOCAL_LOGS and ROOT_PATH_TO_LOCAL_DATA in mnist.py
+
+```shell
+>> # Run training
+>> python -m mnist
+```
 
 
 
@@ -35,4 +46,4 @@ between camera frames and the other measurements.
 
 ## Credits
 Author: Malo Marrec, malo@goodailab.com, (c) GoodAILab as specified in LICENSE
-Data and data_reader.py -  https://github.com/commaai/research - Licensed as specified in LICENSE COMMA
+Data and data_reader.py -  https://github.com/commaai/research - Licensed as specified in LICENSE_COMMA
