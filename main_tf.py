@@ -22,7 +22,7 @@ from utils.data_reader import *
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-if __name__ == "__main__":
+def main():
 
 	# tport snippet 1
 	try:
@@ -53,14 +53,14 @@ if __name__ == "__main__":
 	#Here the data directory are split into training and validation, so defining two flags
 	flags.DEFINE_string(
 		"train_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='/camera/training'),
+		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/training'),
 		"""Path to training dataset. It is recommended to use get_data_path() 
 		to define your data directory. If you set your dataset directory manually make sure to use /data/ 
 		as root path when running on TensorPort cloud."""
 		)
 	flags.DEFINE_string(
 		"val_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='/camera/validation'),
+		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/validation'),
 		"Path to validation dataset."
 		)
 	flags.DEFINE_string("logs_dir",
@@ -82,6 +82,8 @@ if __name__ == "__main__":
 
 	# end of tport snippet 2
 
+	print(ROOT_PATH_TO_LOCAL_DATA)
+	print("------> %s " % tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='/camera/validation'))
 
 	# #DEBUG
 	# flags.DEFINE_string("train_data_dir","/Users/malo/Documents/comma/comma-data/camera/training","")
@@ -93,16 +95,12 @@ if __name__ == "__main__":
 	# Training flags
 	flags.DEFINE_integer("batch",256,"Batch size")
 	flags.DEFINE_integer("time",1,"Number of frames per sample")
-	flags.DEFINE_integer("steps_per_epoch",1000,"Number of training steps per epoch")
+	flags.DEFINE_integer("steps_per_epoch",10,"Number of training steps per epoch")
 	flags.DEFINE_integer("nb_val_steps",1,"Number of training steps")
-	flags.DEFINE_integer("nb_epochs",20,"Number of epochs")
+	flags.DEFINE_integer("nb_epochs",2,"Number of epochs")
 
 
 	# Model flags
-
-
-
-
 	flags.DEFINE_float("dropout_rate1",.2,"Dropout rate on first dropout layer")
 	flags.DEFINE_float("dropout_rate2",.5,"Dropout rate on second dropout layer")
 	flags.DEFINE_float("starter_lr",1e-3,"Starter learning rate. Exponential decay is applied")
@@ -110,7 +108,7 @@ if __name__ == "__main__":
 	flags.DEFINE_boolean("nogood",False,"Ignore `goods` filters.")
 
 
-	print(FLAGS.train_data_dir)
+	print("------> %s" % FLAGS.train_data_dir)
 
 	# tport snippet 3: configure distributed
 	def device_and_target():
@@ -262,6 +260,8 @@ if __name__ == "__main__":
 		run_val(target,gen_train,FLAGS)
 
 
+if __name__ == "__main__": #Generators don't exit cleanly for some reason (GeneratorExit)
+	main()
 
 
 		
