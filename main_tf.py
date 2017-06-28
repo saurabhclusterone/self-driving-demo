@@ -39,7 +39,7 @@ def main():
 	#Path to your data locally. This will enable to run the model both locally and on 
 	# tensorport without changes
 	PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/tensorport-self-driving-demo/logs/')
-	ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/comma/comma-data/')
+	ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/comma/')
 	#end of tport snippet 1
 
 
@@ -53,14 +53,14 @@ def main():
 	#Here the data directory are split into training and validation, so defining two flags
 	flags.DEFINE_string(
 		"train_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/training'),
+		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='comma-light-fixed/camera/training'),
 		"""Path to training dataset. It is recommended to use get_data_path() 
 		to define your data directory. If you set your dataset directory manually make sure to use /data/ 
 		as root path when running on TensorPort cloud."""
 		)
 	flags.DEFINE_string(
 		"val_data_dir",
-		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='camera/validation'),
+		tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='comma-light-fixed//camera/validation'),
 		"Path to validation dataset."
 		)
 	flags.DEFINE_string("logs_dir",
