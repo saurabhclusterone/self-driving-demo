@@ -17,6 +17,7 @@ from tensorport import TensorportClient as tport
 
 from models.model import *
 from utils.data_reader import *
+from utils.view_steering_model import *
 
 #Create logging
 logging.basicConfig(level=logging.DEBUG)
@@ -95,7 +96,7 @@ def main():
 	# Training flags
 	flags.DEFINE_integer("batch",256,"Batch size")
 	flags.DEFINE_integer("time",1,"Number of frames per sample")
-	flags.DEFINE_integer("steps_per_epoch",10000,"Number of training steps per epoch")
+	flags.DEFINE_integer("steps_per_epoch",1000,"Number of training steps per epoch")
 	flags.DEFINE_integer("nb_val_steps",1,"Number of training steps")
 	flags.DEFINE_integer("nb_epochs",20,"Number of epochs")
 
@@ -163,11 +164,13 @@ def main():
 
 	# Define graph
 	with tf.device(device):
-		X = tf.placeholder(tf.float32, [FLAGS.batch, 3, 160, 320])
-		Y = tf.placeholder(tf.float32,[FLAGS.batch,1]) # angle only
+		X = tf.placeholder(tf.float32, [FLAGS.batch, 3, 160, 320], name ="X")
+		Y = tf.placeholder(tf.float32,[FLAGS.batch,1], name ="Y") # angle only
+		S = tf.placeholder(tf.float32,[FLAGS.batch,1], name ="S") #speed
 		# global_step = tf.Variable(0, trainable=False)	
 
 		predictions = get_model(X,FLAGS)
+		steering_summary = tf.summary.image("green-is-predicted",render_steering_tf(X,Y,S,predictions)) # Adding numpy operation to graph. Adding image to summary
 		loss = get_loss(predictions,Y)
 		training_summary = tf.summary.scalar('Training_Loss', loss)#add to tboard
 		validation_summary = tf.summary.scalar('Validation_Loss', loss)
@@ -187,8 +190,6 @@ def main():
 			tf.train.AdamOptimizer(learning_rate)
 			.minimize(loss, global_step=global_step)
 			)
-
-	#TODO: we're defining functions inside the main to avoir having a large nb of parameters to run_train_epoch. Not that clean.
 
 	def run_train_epoch(target,gen_train,FLAGS,epoch_index):
 		"""Restores the last checkpoint and runs a training epoch
@@ -210,16 +211,18 @@ def main():
 		checkpoint_dir=FLAGS.logs_dir,
 		hooks = hooks) as sess:
 
-			summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
+			# summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
 			while not sess.should_stop():
 				batch_train = gen_train.next()
 
 				feed_dict = {X: batch_train[0],
-								Y: batch_train[1]}
+								Y: batch_train[1],
+								S: batch_train[2]
+								}
 
-				variables = [loss, training_summary, learning_rate, train_step]
-				current_loss, t_summary, lr, _ = sess.run(variables, feed_dict)
-				summary_writer.add_summary(t_summary,i)
+				variables = [loss, learning_rate, train_step]
+				current_loss, lr, _ = sess.run(variables, feed_dict)
+				# summary_writer.add_summary(t_summary,i)
 				# print("Epoch %s, iteration %s - Learning Rate: %f, Batch loss: %s" % (e,i,lr,current_loss))
 				print("Iteration %s - Batch loss: %s" % ((epoch_index-1)*FLAGS.steps_per_epoch + i,current_loss))
 				i+=1
@@ -242,16 +245,20 @@ def main():
 			checkpoint_dir=FLAGS.logs_dir,
 			hooks = hooks) as sess:
 
-			summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
+			# summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
 			while not sess.should_stop():
 				batch_val = gen_val.next()
 
 				feed_dict = {X: batch_val[0],
-							Y: batch_val[1]}
+							Y: batch_val[1],
+							S: batch_val[2]
+							}
 
-				variables = [loss, validation_summary]
-				current_loss, v_summary = sess.run(variables, feed_dict)
-				summary_writer.add_summary(v_summary,1)
+
+				# variables = [loss, validation_summary]
+
+				current_loss = sess.run(loss, feed_dict)
+				# summary_writer.add_summary(v_summary,1)
 				print("Validation loss: %s" % (current_loss))
 
 

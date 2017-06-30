@@ -146,8 +146,21 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 def gen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 	"""" Wrapper for datagen, taking only steering angle"""
 	for data_row in datagen(data_dir, time_len, batch_size, ignore_goods):
-		X, Y, _ = data_row
-		Y = Y[:, -1]
+		X, angle, speed = data_row
+		angle = angle[:, -1]
+		speed = speed[:, -1]
 		if X.shape[1] == 1:  # no temporal context
 			X = X[:, -1]
-		yield X, Y
+		yield X, angle, speed
+
+
+
+
+if __name__ == "__main__":
+	#Testing only
+	DATA_DIR = os.path.expanduser('~/Documents/comma/comma-final/camera/training')
+	print("Running tests")
+	gen_train = gen(DATA_DIR)
+	assert len(gen_train.next()) == 3
+	assert gen_train.next()[2].shape == (256,1)
+
