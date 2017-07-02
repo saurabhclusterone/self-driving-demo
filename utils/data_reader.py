@@ -6,6 +6,7 @@ import logging
 import traceback
 import tensorflow as tf
 import json
+import glob
 
 # Credits for this code and the data: comma.ai
 # https://github.com/commaai/research
@@ -68,16 +69,25 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 	-----------
 	leads : bool, should we use all x, y and speed radar leads? default is false, uses only x
 	
-	data_dir: path to the data directory
+	data_dir: path to the data directory(-ies). Either a string, or a list of strings if several directories
 	"""
 	global first
 	assert time_len > 0
 
+	all_files = glob.glob(os.path.join(data_dir))
+	# if isinstance(data_dir,list):#[malo] adding support for multiple datasets in tport
+	# 	all_files = []
+	# 	for sub_dir in data_dir:
+	# 		filter_files = os.listdir(sub_dir)
+	# 		filter_files = [sub_dir + "/" + f for f in filter_files if f.endswith(".h5")] #sorint .h5 + full path
+	# 		all_files.append(filter_files)
+	# elif isinstance(data_dir,list):
+	# 	filter_files = os.listdir(data_dir)
+	# 	filter_files = [data_dir + "/" + f for f in filter_files if f.endswith(".h5")] #sorint .h5 + full path
+	# else:
+	# 	raise ValueError("data_dir should either be the path to a dir or a list of paths. Got %s" % type(data_dir))
 
-	filter_files = os.listdir(data_dir)
-	filter_files = [data_dir + "/" + f for f in filter_files if f.endswith(".h5")] #sorint .h5 + full path
-	
-	filter_names = sorted(filter_files)
+	filter_names = sorted(all_files)
 
 	logger.info("Loading {} hdf5 buckets.".format(len(filter_names)))
 
@@ -144,7 +154,7 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 
 
 def gen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
-	"""" Wrapper for datagen, taking only steering angle"""
+	"""" Wrapper for datagen"""
 	for data_row in datagen(data_dir, time_len, batch_size, ignore_goods):
 		X, angle, speed = data_row
 		angle = angle[:, -1]

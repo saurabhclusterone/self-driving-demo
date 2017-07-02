@@ -46,4 +46,5 @@ between camera frames and the other measurements.
 
 ## Credits
 Author: Malo Marrec, malo@goodailab.com, (c) GoodAILab as specified in LICENSE
+
 Data and data_reader.py -  https://github.com/commaai/research - Licensed as specified in LICENSE_COMMA

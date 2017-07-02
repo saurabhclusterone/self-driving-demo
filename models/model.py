@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 def get_model(X, FLAGS):
-	#ch, row, col = 3, 160, 320
-	#Add the lambda here. Is it a mean substraction?
-
 	conv1 = tf.layers.conv2d(
 		tf.reshape(X,[FLAGS.batch,3,160,320]),
 		filters = 16,
