@@ -231,25 +231,23 @@ def main():
                 Note that whatever most recent checkpoint from that directory will be used.
             - gen_val: validation data generator
         """
-        sess=tf.Session()  
-        saver = tf.train.Saver()
-        print(tf.train.latest_checkpoint(FLAGS.logs_dir))
-        saver.restore(sess,tf.train.latest_checkpoint(FLAGS.logs_dir))
-        sess.run(tf.local_variables_initializer())
+        with tf.device("/job:localhost/replica:0/task:0/cpu:0"):
+            sess=tf.Session()  
+            saver = tf.train.import_meta_graph('logs/model.ckpt-81.meta')
+            saver.restore(sess,tf.train.latest_checkpoint(FLAGS.logs_dir))
+            sess.run(tf.local_variables_initializer())
+            for i in range(FLAGS.nb_val_batches):
+                batch_val = gen_val.next()
 
-
-        for i in range(FLAGS.nb_val_batches):
-            batch_val = gen_val.next()
-
-            feed_dict = {X: batch_val[0],
-                        Y: batch_val[1],
-                        S: batch_val[2]
-                        }
-            current_loss = sess.run(update_op, feed_dict)
-            print("Validation batch %s" % i)
-            if i == (FLAGS.nb_val_batches - 1): #end of val batch, update loss
-                current_loss = sess.run(mean_loss)
-                print("Validation loss: %s" % (current_loss+1))
+                feed_dict = {X: batch_val[0],
+                            Y: batch_val[1],
+                            S: batch_val[2]
+                            }
+                current_loss = sess.run(update_op, feed_dict)
+                print("Validation batch %s" % i)
+                if i == (FLAGS.nb_val_batches - 1): #end of val batch, update loss
+                    current_loss = sess.run(mean_loss)
+                    print("Validation loss: %s" % (current_loss+1))
 
     for e in range(FLAGS.nb_epochs):
         run_train_epoch(target, gen_train, FLAGS, e)
