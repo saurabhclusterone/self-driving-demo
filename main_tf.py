@@ -222,7 +222,7 @@ def main():
                 i+=1
 
     #Left to the reader - that could be done in a continuous fashion on a separate worker / thread
-    def run_val(target,gen_val,FLAGS):
+    def run_val(gen_val,FLAGS):
         """Restores the last checkpoint and runs validation
         Inputs:
             - target: device setter for distributed work
@@ -253,7 +253,8 @@ def main():
 
     for e in range(FLAGS.nb_epochs):
         run_train_epoch(target, gen_train, FLAGS, e)
-        run_val(target, gen_train, FLAGS)
+        if FLAGS.task_index == 0: #if is_chief. Running val only on master node.
+            run_val(gen_train, FLAGS)
 
 
 if __name__ == "__main__": #Generators don't exit cleanly for some reason (GeneratorExit)
