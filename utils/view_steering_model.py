@@ -5,7 +5,6 @@ import argparse
 import sys
 import numpy as np
 import h5py
-import pygame
 import json
 import tensorflow as tf
 from pdb import set_trace as bp
@@ -13,13 +12,6 @@ import os
 import time
 import scipy.misc
 from tensorflow import py_func
-
-
-pygame.init()
-size = (320*2, 160*2)
-screen = pygame.display.set_mode(size, pygame.DOUBLEBUF)
-
-camera_surface = pygame.surface.Surface((320,160),0,24).convert()
 
 # ***** get perspective transform for images *****
 from skimage import transform as trans
@@ -108,11 +100,7 @@ def render_steering_frame(img,ground_truth,speed_ms,prediction):
 	img = img.swapaxes(0,2).swapaxes(0,1)
 	draw_path_on(img, speed_ms, - angle_steers/10.0)
 	draw_path_on(img, speed_ms, - predicted_steer/10.0,(0, 255, 0))
-
-	# draw on
-	pygame.surfarray.blit_array(camera_surface, img.swapaxes(0,1))
-	camera_surface_2x = pygame.transform.rotate(pygame.transform.scale2x(camera_surface),90)
-	return(pygame.surfarray.array3d(camera_surface_2x))
+	return(img)
 
 def render_steering_frame_batch(img_batch,ground_truth_batch,speed_ms_batch, prediction_batch):
 	"""
