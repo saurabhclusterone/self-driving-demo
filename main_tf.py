@@ -67,9 +67,9 @@ def main():
         )
     flags.DEFINE_string(
         "val_data_dir",
-        tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='comma-final/camera/validation'),
+        tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/validation'),
         "Path to validation dataset."
-        ) # On tensorport, we will mount the validation set to comma-final
+        )
 
     flags.DEFINE_string("logs_dir",
         tport().get_logs_path(root=PATH_TO_LOCAL_LOGS),

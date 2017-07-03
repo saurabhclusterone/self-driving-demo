@@ -106,6 +106,7 @@ def render_steering_frame_batch(img_batch,ground_truth_batch,speed_ms_batch, pre
 	"""
 	Added by malo@goodailab.com
 	Applies render_steering_frame to a batch of images.
+	Input:
 	- img: numpy array, batch of camera frames. Numpy array of (batch_size, width,height,3)
 	- groud_truth: batch of ground truth of the steering angle. Numpy array of (batch_size)
 	- speed_ms: float, ground truth for the speed. Numpy array of size (batch_size)
@@ -117,7 +118,7 @@ def render_steering_frame_batch(img_batch,ground_truth_batch,speed_ms_batch, pre
 	for i in range(img_batch.shape[0]):
 		rendered = render_steering_frame(img_batch[i,:,:,:],ground_truth_batch[i],speed_ms_batch[i],prediction_batch[i])
 		rendered_list.append(rendered)
-	rendered_list = np.asarray(rendered_list) #TODO -> does not work
+	rendered_list = np.asarray(rendered_list)
 	
 	assert len(rendered_list.shape) == 4 # sanity check
 	assert rendered_list.shape[0] == img_batch.shape[0] # sanity check
