@@ -95,8 +95,8 @@ def main():
     # Training flags - feel free to play with that!
     flags.DEFINE_integer("batch",256,"Batch size")
     flags.DEFINE_integer("time",1,"Number of frames per sample")
-    flags.DEFINE_integer("steps_per_epoch",100,"Number of training steps per epoch")
-    flags.DEFINE_integer("nb_val_steps",1,"Number of training steps")
+    flags.DEFINE_integer("steps_per_epoch",10,"Number of training steps per epoch")
+    flags.DEFINE_integer("nb_val_batches",50,"Number of batches to get the average validation loss")
     flags.DEFINE_integer("nb_epochs",20,"Number of epochs")
 
 
@@ -166,12 +166,15 @@ def main():
         predictions = get_model(X,FLAGS)
         steering_summary = tf.summary.image("green-is-predicted",render_steering_tf(X,Y,S,predictions)) # Adding numpy operation to graph. Adding image to summary
         loss = get_loss(predictions,Y)
+        val_loss = get_loss(predictions,Y) #separate val loss and training loss to avoid writing wrong summaries
+        mean_loss, update_op = tf.contrib.metrics.streaming_mean(val_loss) #defining loss on batch
+
         training_summary = tf.summary.scalar('Training_Loss', loss)#add to tboard
-        validation_summary = tf.summary.scalar('Validation_Loss', loss)
+        validation_summary = tf.summary.scalar('Validation_Loss', mean_loss) #replace with streamed loss
 
         #Batch generators
         gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
-        print("val")
+
         gen_val = gen(FLAGS.val_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 
         global_step = tf.contrib.framework.get_or_create_global_step()
@@ -194,7 +197,7 @@ def main():
             - epoch_index: index of current epoch
         """
 
-        hooks=[tf.train.StopAtStepHook(last_step=FLAGS.steps_per_epoch*epoch_index)] # Increment number of required training steps
+        hooks=[tf.train.StopAtStepHook(num_steps=FLAGS.steps_per_epoch)] # Increment number of required training steps
         i = 1
 
         with tf.train.MonitoredTrainingSession(master=target,
@@ -210,10 +213,12 @@ def main():
                                 S: batch_train[2]
                                 }
 
+
+
                 variables = [loss, learning_rate, train_step]
                 current_loss, lr, _ = sess.run(variables, feed_dict)
 
-                print("Iteration %s - Batch loss: %s" % ((epoch_index-1)*FLAGS.steps_per_epoch + i,current_loss))
+                print("Iteration %s - Batch loss: %s" % ((epoch_index)*FLAGS.steps_per_epoch + i,current_loss))
                 i+=1
 
     #Left to the reader - that could be done in a continuous fashion on a separate worker / thread
@@ -226,25 +231,25 @@ def main():
                 Note that whatever most recent checkpoint from that directory will be used.
             - gen_val: validation data generator
         """
-        hooks=[tf.train.StopAtStepHook(last_step=1)]
+        sess=tf.Session()  
+        saver = tf.train.Saver()
+        print(tf.train.latest_checkpoint(FLAGS.logs_dir))
+        saver.restore(sess,tf.train.latest_checkpoint(FLAGS.logs_dir))
+        sess.run(tf.local_variables_initializer())
 
-        with tf.train.MonitoredTrainingSession(master=target,
-            is_chief=(FLAGS.task_index == 0),
-            checkpoint_dir=FLAGS.logs_dir,
-            hooks=hooks) as sess:
 
-            while not sess.should_stop():
-                batch_val = gen_val.next()
+        for i in range(FLAGS.nb_val_batches):
+            batch_val = gen_val.next()
 
-                feed_dict = {X: batch_val[0],
-                            Y: batch_val[1],
-                            S: batch_val[2]
-                            }
-
-                current_loss = sess.run(loss, feed_dict)
-
-                print("Validation loss: %s" % (current_loss))
-
+            feed_dict = {X: batch_val[0],
+                        Y: batch_val[1],
+                        S: batch_val[2]
+                        }
+            current_loss = sess.run(update_op, feed_dict)
+            print("Validation batch %s" % i)
+            if i == (FLAGS.nb_val_batches - 1): #end of val batch, update loss
+                current_loss = sess.run(mean_loss)
+                print("Validation loss: %s" % (current_loss+1))
 
     for e in range(FLAGS.nb_epochs):
         run_train_epoch(target, gen_train, FLAGS, e)
