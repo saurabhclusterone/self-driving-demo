@@ -95,8 +95,8 @@ def main():
     # Training flags - feel free to play with that!
     flags.DEFINE_integer("batch",256,"Batch size")
     flags.DEFINE_integer("time",1,"Number of frames per sample")
-    flags.DEFINE_integer("steps_per_epoch",10000,"Number of training steps per epoch")
-    flags.DEFINE_integer("nb_epochs",200,"Number of epochs")
+    flags.DEFINE_integer("steps_per_epoch",1,"Number of training steps per epoch")
+    flags.DEFINE_integer("nb_epochs",1,"Number of epochs")
 
 
     # Model flags - feel free to play with that!
@@ -210,14 +210,17 @@ def main():
                 variables = [loss, learning_rate, train_step]
                 current_loss, lr, _ = sess.run(variables, feed_dict)
 
-                print("Iteration %s - Batch loss: %s" % ((epoch_index-1)*FLAGS.steps_per_epoch + i,current_loss))
+                print("Iteration %s - Batch loss: %s" % ((epoch_index)*FLAGS.steps_per_epoch + i,current_loss))
                 i+=1
 
     for e in range(FLAGS.nb_epochs):
         run_train_epoch(target, gen_train, FLAGS, e)
 
-if __name__ == "__main__": #Generators don't exit cleanly for some reason (GeneratorExit)
+
+
+if __name__ == "__main__":
     main()
+
 
 
         
