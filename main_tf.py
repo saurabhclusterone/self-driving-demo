@@ -102,7 +102,7 @@ def main():
     # Model flags - feel free to play with that!
     flags.DEFINE_float("dropout_rate1",.2,"Dropout rate on first dropout layer")
     flags.DEFINE_float("dropout_rate2",.5,"Dropout rate on second dropout layer")
-    flags.DEFINE_float("starter_lr",1e-2,"Starter learning rate. Exponential decay is applied")
+    flags.DEFINE_float("starter_lr",1e-5,"Starter learning rate. Exponential decay is applied")
     flags.DEFINE_integer("fc_dim",512,"Size of the dense layer")
     flags.DEFINE_boolean("nogood",False,"Ignore `goods` filters.")
 
