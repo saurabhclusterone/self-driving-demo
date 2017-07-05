@@ -95,8 +95,8 @@ def main():
     # Training flags - feel free to play with that!
     flags.DEFINE_integer("batch",256,"Batch size")
     flags.DEFINE_integer("time",1,"Number of frames per sample")
-    flags.DEFINE_integer("steps_per_epoch",1,"Number of training steps per epoch")
-    flags.DEFINE_integer("nb_epochs",1,"Number of epochs")
+    flags.DEFINE_integer("steps_per_epoch",10000,"Number of training steps per epoch")
+    flags.DEFINE_integer("nb_epochs",20,"Number of epochs")
 
 
     # Model flags - feel free to play with that!
