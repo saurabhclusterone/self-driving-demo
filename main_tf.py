@@ -158,18 +158,22 @@ def main():
 
     # Define graph
     with tf.device(device):
-        X = tf.placeholder(tf.float32, [FLAGS.batch, 3, 160, 320], name="X")
-        Y = tf.placeholder(tf.float32,[FLAGS.batch,1], name="Y") # angle only
-        S = tf.placeholder(tf.float32,[FLAGS.batch,1], name="S") #speed
+
+        reader = H5reader(FLAGS.train_data_dir)
+        reader.tf_get_example()
+
+        x, y, z = reader.tf_get_example()
+        X, Y, S = tf.train.batch([x, y, z], batch_size=16, )
+
+        #arbitrary: 5*batch size. Might be another flag.
+        q = tf.FIFOQueue(FLAGS.batch*5, [tf.float32, tf.float32], shapes=[[3,160,320], [],[]])
+        enqueue_op = q.enqueue_many([X, Y, S])
 
         predictions = get_model(X,FLAGS)
         steering_summary = tf.summary.image("green-is-predicted",render_steering_tf(X,Y,S,predictions)) # Adding numpy operation to graph. Adding image to summary
         loss = get_loss(predictions,Y)
         training_summary = tf.summary.scalar('Training_Loss', loss)#add to tboard
         validation_summary = tf.summary.scalar('Validation_Loss', loss)
-
-        #Batch generators
-        gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 
         global_step = tf.contrib.framework.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,1000, 0.96, staircase=True)
@@ -200,15 +204,9 @@ def main():
         hooks = hooks) as sess:
 
             while not sess.should_stop():
-                batch_train = gen_train.next()
-
-                feed_dict = {X: batch_train[0],
-                                Y: batch_train[1],
-                                S: batch_train[2]
-                                }
-
+                
                 variables = [loss, learning_rate, train_step]
-                current_loss, lr, _ = sess.run(variables, feed_dict)
+                current_loss, lr, _ = sess.run(variables)
 
                 print("Iteration %s - Batch loss: %s" % ((epoch_index)*FLAGS.steps_per_epoch + i,current_loss))
                 i+=1
