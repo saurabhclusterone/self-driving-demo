@@ -95,9 +95,8 @@ def main():
     # Training flags - feel free to play with that!
     flags.DEFINE_integer("batch",256,"Batch size")
     flags.DEFINE_integer("time",1,"Number of frames per sample")
-    flags.DEFINE_integer("steps_per_epoch",100,"Number of training steps per epoch")
-    flags.DEFINE_integer("nb_val_steps",1,"Number of training steps")
-    flags.DEFINE_integer("nb_epochs",20,"Number of epochs")
+    flags.DEFINE_integer("steps_per_epoch",10000,"Number of training steps per epoch")
+    flags.DEFINE_integer("nb_epochs",200,"Number of epochs")
 
 
     # Model flags - feel free to play with that!
@@ -171,8 +170,6 @@ def main():
 
         #Batch generators
         gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
-        print("val")
-        gen_val = gen(FLAGS.val_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
 
         global_step = tf.contrib.framework.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,1000, 0.96, staircase=True)
@@ -216,40 +213,8 @@ def main():
                 print("Iteration %s - Batch loss: %s" % ((epoch_index-1)*FLAGS.steps_per_epoch + i,current_loss))
                 i+=1
 
-    #Left to the reader - that could be done in a continuous fashion on a separate worker / thread
-    def run_val(target,gen_val,FLAGS):
-        """Restores the last checkpoint and runs validation
-        Inputs:
-            - target: device setter for distributed work
-            - FLAGS: 
-                - requires FLAGS.logs_dir from which the model will be restored. 
-                Note that whatever most recent checkpoint from that directory will be used.
-            - gen_val: validation data generator
-        """
-        hooks=[tf.train.StopAtStepHook(last_step=1)]
-
-        with tf.train.MonitoredTrainingSession(master=target,
-            is_chief=(FLAGS.task_index == 0),
-            checkpoint_dir=FLAGS.logs_dir,
-            hooks=hooks) as sess:
-
-            while not sess.should_stop():
-                batch_val = gen_val.next()
-
-                feed_dict = {X: batch_val[0],
-                            Y: batch_val[1],
-                            S: batch_val[2]
-                            }
-
-                current_loss = sess.run(loss, feed_dict)
-
-                print("Validation loss: %s" % (current_loss))
-
-
     for e in range(FLAGS.nb_epochs):
         run_train_epoch(target, gen_train, FLAGS, e)
-        run_val(target, gen_train, FLAGS)
-
 
 if __name__ == "__main__": #Generators don't exit cleanly for some reason (GeneratorExit)
     main()
