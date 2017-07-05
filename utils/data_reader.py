@@ -139,6 +139,8 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 
 		except KeyboardInterrupt:
 			raise
+		except GeneratorExit:
+			return
 		except:
 			traceback.print_exc()
 			pass
