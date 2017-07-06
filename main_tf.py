@@ -18,7 +18,7 @@ import numpy as np
 import h5py
 
 #tport 
-from tensorport import TensorportClient as tport
+from tensorport import get_data_path, get_logs_path
 
 from models.model import *
 from utils.data_reader import *
@@ -60,19 +60,19 @@ def main():
     #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on tensorport
     flags.DEFINE_string(
         "train_data_dir",
-        tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/training/*.h5'),
+        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/training/*.h5'),
         """Path to training dataset. It is recommended to use get_data_path() 
         to define your data directory. If you set your dataset directory manually make sure to use /data/ 
         as root path when running on TensorPort cloud."""
         )
     flags.DEFINE_string(
         "val_data_dir",
-        tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/validation'),
+        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/validation'),
         "Path to validation dataset."
         )
 
     flags.DEFINE_string("logs_dir",
-        tport().get_logs_path(root=PATH_TO_LOCAL_LOGS),
+        get_logs_path(root=PATH_TO_LOCAL_LOGS),
         "Path to store logs and checkpoints. It is recommended"
         "to use get_logs_path() to define your logs directory."
         "If you set your logs directory manually make sure"
@@ -96,13 +96,13 @@ def main():
     flags.DEFINE_integer("batch",256,"Batch size")
     flags.DEFINE_integer("time",1,"Number of frames per sample")
     flags.DEFINE_integer("steps_per_epoch",10000,"Number of training steps per epoch")
-    flags.DEFINE_integer("nb_epochs",20,"Number of epochs")
+    flags.DEFINE_integer("nb_epochs",200,"Number of epochs")
 
 
     # Model flags - feel free to play with that!
     flags.DEFINE_float("dropout_rate1",.2,"Dropout rate on first dropout layer")
     flags.DEFINE_float("dropout_rate2",.5,"Dropout rate on second dropout layer")
-    flags.DEFINE_float("starter_lr",1e-5,"Starter learning rate. Exponential decay is applied")
+    flags.DEFINE_float("starter_lr",1e-1,"Starter learning rate. Exponential decay is applied")
     flags.DEFINE_integer("fc_dim",512,"Size of the dense layer")
     flags.DEFINE_boolean("nogood",False,"Ignore `goods` filters.")
 
