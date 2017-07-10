@@ -60,10 +60,11 @@ def main():
     #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on tensorport
     flags.DEFINE_string(
         "train_data_dir",
-        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,
-            local_repo="*", #all repos (we use glob downstream, see read_data.py)
-            path='camera/training/*.h5', #all .h5 files
-            tport_repo='*' #all mounted repo
+        get_data_path(
+            dataset_name = "malo/*", #all mounted repo
+            local_root = ROOT_PATH_TO_LOCAL_DATA,
+            local_repo = "comma-final", #all repos (we use glob downstream, see read_data.py)
+            path = 'camera/training/*.h5'#all .h5 files
             ),
         """Path to training dataset. It is recommended to use get_data_path()
         to define your data directory. If you set your dataset directory manually make sure to use /data/
@@ -72,12 +73,6 @@ def main():
         so you can acces `path` with  /data/user/tport_dataset_name/path
         """
         )
-    flags.DEFINE_string(
-        "val_data_dir",
-        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='malo/*/camera/validation'), #TODO: comma-smallest -> *
-        "Path to validation dataset."
-        )
-
     flags.DEFINE_string("logs_dir",
         get_logs_path(root=PATH_TO_LOCAL_LOGS),
         "Path to store logs and checkpoints. It is recommended"
@@ -158,8 +153,8 @@ def main():
         raise ValueError("Must specify an explicit `logs_dir`")
     if FLAGS.train_data_dir is None or FLAGS.train_data_dir == "":
         raise ValueError("Must specify an explicit `train_data_dir`")
-    if FLAGS.val_data_dir is None or FLAGS.val_data_dir == "":
-        raise ValueError("Must specify an explicit `val_data_dir`")
+    # if FLAGS.val_data_dir is None or FLAGS.val_data_dir == "":
+    #     raise ValueError("Must specify an explicit `val_data_dir`")
 
     TIME_LEN = 1 #1 video frame. Other not supported.
 
