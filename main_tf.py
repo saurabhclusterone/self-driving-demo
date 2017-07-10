@@ -17,7 +17,7 @@ import tensorflow as tf
 import numpy as np
 import h5py
 
-#tport 
+#tport
 from tensorport import get_data_path, get_logs_path
 
 from models.model import *
@@ -43,7 +43,7 @@ def main():
         ps_hosts = None
         worker_hosts = None
 
-    #Path to your data locally. This will enable to run the model both locally and on 
+    #Path to your data locally. This will enable to run the model both locally and on
     # tensorport without changes
     PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/tensorport-self-driving-demo/logs/')
     ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/comma/')
@@ -54,20 +54,20 @@ def main():
     flags = tf.app.flags
     FLAGS = flags.FLAGS
 
-    # tport snippet 2: flags. 
+    # tport snippet 2: flags.
 
     #Define the path from the root data directory to your data.
     #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on tensorport
     flags.DEFINE_string(
         "train_data_dir",
-        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/training/*.h5'),
-        """Path to training dataset. It is recommended to use get_data_path() 
-        to define your data directory. If you set your dataset directory manually make sure to use /data/ 
+        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='malo/*/camera/training/*.h5'), #TODO: comma-smallest -> *
+        """Path to training dataset. It is recommended to use get_data_path()
+        to define your data directory. If you set your dataset directory manually make sure to use /data/
         as root path when running on TensorPort cloud."""
         )
     flags.DEFINE_string(
         "val_data_dir",
-        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/validation'),
+        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='malo/*/camera/validation'), #TODO: comma-smallest -> *
         "Path to validation dataset."
         )
 
@@ -173,7 +173,7 @@ def main():
 
         global_step = tf.contrib.framework.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,1000, 0.96, staircase=True)
-        
+
         train_step = (
             tf.train.AdamOptimizer(learning_rate)
             .minimize(loss, global_step=global_step)
@@ -183,8 +183,8 @@ def main():
         """Restores the last checkpoint and runs a training epoch
         Inputs:
             - target: device setter for distributed work
-            - FLAGS: 
-                - requires FLAGS.logs_dir from which the model will be restored. 
+            - FLAGS:
+                - requires FLAGS.logs_dir from which the model will be restored.
                 Note that whatever most recent checkpoint from that directory will be used.
                 - requires FLAGS.steps_per_epoch
             - gen_train: training data generator
@@ -220,9 +220,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-        
-
-    
