@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
+
 def concatenate(camera_names, time_len):
 	logs_names = [x.replace('camera', 'labels') for x in camera_names]
 
@@ -61,6 +62,7 @@ def concatenate(camera_names, time_len):
 	print "training on %d/%d examples" % (filters.shape[0], angle.shape[0])
 	return c5x, angle, speed, filters, hdf5_camera
 
+<<<<<<< Updated upstream
 first = True
 
 def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
@@ -143,6 +145,8 @@ def datagen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 			traceback.print_exc()
 			pass
 
+=======
+>>>>>>> Stashed changes
 
 def gen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 	"""" Wrapper for datagen"""
@@ -156,12 +160,89 @@ def gen(data_dir, time_len=1, batch_size=256, ignore_goods=False):
 
 
 
+class H5reader():
+
+	def __init__(self,data_dir):
+		self.data_dir = data_dir
+		all_files = sorted(glob.glob(os.path.join(self.data_dir)))
+		c5x, angle, speed, filters, hdf5_camera = concatenate(all_files, time_len=time_len)
+		self.c5x = c5x
+		self.angle = angle
+		self.filters = filters
+		self.hdf5_camera = hdf5_camera
+
+		logger.info("Loading {} hdf5 buckets.".format(len(all_files)))
+		filters_set = set(filters)
+		logger.info("camera files {}".format(len(c5x)))
+
+		X_batch = np.zeros((batch_size, time_len, 3, 160, 320), dtype='uint8')
+		angle_batch = np.zeros((batch_size, time_len, 1), dtype='float32')
+		speed_batch = np.zeros((batch_size, time_len, 1), dtype='float32')
+
+		while True:
+			try:
+						i = np.random.choice(filters)
+						for j in (i-time_len+1, i+1):
+							if j not in filters_set:
+								good = False
+						if not good:
+							continue
+					for es, ee, x in c5x: #This is basically iterating over the files and smapling from theml
+						if i >= es and i < ee:
+							X_batch[count] = x[i-es-time_len+1:i-es+1]
+							break
+
+					angle_batch[count] = np.copy(angle[i-time_len+1:i+1])[:, None]
+					speed_batch[count] = np.copy(speed[i-time_len+1:i+1])[:, None]
+
+					count += 1
+
+				# sanity check
+				assert X_batch.shape == (batch_size, time_len, 3, 160, 320)
+
+				# logging.debug("loading image took: {}s".format(time.time()-t))
+				# print("%5.2f ms" % ((time.time()-start)*1000.0))
+
+				if first:
+					print "X", X_batch.shape
+					print "angle", angle_batch.shape
+					print "speed", speed_batch.shape
+					first = False
+
+				yield (X_batch, angle_batch, speed_batch)
+
+			except KeyboardInterrupt:
+				raise
+			except GeneratorExit:
+				return
+			except:
+				traceback.print_exc()
+				pass
+	def read_example(self):
+		row = self.generator.next()
+		yield row[0][0,:,:,:], row[1][0], row[2][0]
+
+	def tf_read_example(self):
+		x, y, z = tf.py_func(self.read_example,[],[tf.float32, tf.float32, tf.float32]) #, stateful=True)
+		x.set_shape([3,160,320])
+		y.set_shape([1])
+		z.set_shape([1])
+		return x, y, z
+
+
 
 if __name__ == "__main__":
 	#Testing only
-	DATA_DIR = os.path.expanduser('~/Documents/comma/comma-final/camera/training')
+	DATA_DIR = os.path.expanduser('~/Documents/comma/comma-final/camera/training/*.h5')
+
 	print("Running tests")
+	print("Data in %s" % DATA_DIR)
 	gen_train = gen(DATA_DIR)
 	assert len(gen_train.next()) == 3
 	assert gen_train.next()[2].shape == (256,1)
 
+	print("Runnin H5reader class tests")
+	reader = H5reader(DATA_DIR)
+	assert reader.read_example()[0].shape == (3,160,320)
+	assert reader.read_example()[1].shape == (1,)
+	assert reader.read_example()[1].shape == (1,)

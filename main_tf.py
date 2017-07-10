@@ -16,8 +16,9 @@ import glob
 import tensorflow as tf
 import numpy as np
 import h5py
+import warnings
 
-#tport 
+#tport
 from tensorport import TensorportClient as tport
 
 from models.model import *
@@ -43,7 +44,7 @@ def main():
         ps_hosts = None
         worker_hosts = None
 
-    #Path to your data locally. This will enable to run the model both locally and on 
+    #Path to your data locally. This will enable to run the model both locally and on
     # tensorport without changes
     PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/tensorport-self-driving-demo/logs/')
     ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/comma/')
@@ -54,29 +55,36 @@ def main():
     flags = tf.app.flags
     FLAGS = flags.FLAGS
 
-    # tport snippet 2: flags. 
+    # tport snippet 2: flags.
 
     #Define the path from the root data directory to your data.
     #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on tensorport
-    flags.DEFINE_string(
-        "train_data_dir",
-        tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/training/*.h5'),
-        """Path to training dataset. It is recommended to use get_data_path() 
-        to define your data directory. If you set your dataset directory manually make sure to use /data/ 
-        as root path when running on TensorPort cloud."""
-        )
-    flags.DEFINE_string(
-        "val_data_dir",
-        tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/validation'),
-        "Path to validation dataset."
-        )
 
-    flags.DEFINE_string("logs_dir",
-        tport().get_logs_path(root=PATH_TO_LOCAL_LOGS),
-        "Path to store logs and checkpoints. It is recommended"
-        "to use get_logs_path() to define your logs directory."
-        "If you set your logs directory manually make sure"
-        "to use /logs/ when running on TensorPort cloud.")
+    # flags.DEFINE_string(
+    #     "train_data_dir",
+    #     tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/training/*.h5'),
+    #     """Path to training dataset. It is recommended to use get_data_path()
+    #     to define your data directory. If you set your dataset directory manually make sure to use /data/
+    #     as root path when running on TensorPort cloud."""
+    #     )
+    # flags.DEFINE_string(
+    #     "val_data_dir",
+    #     tport().get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='*/camera/validation'),
+    #     "Path to validation dataset."
+    #     )
+
+    # flags.DEFINE_string("logs_dir",
+    #     tport().get_logs_path(root=PATH_TO_LOCAL_LOGS),
+    #     "Path to store logs and checkpoints. It is recommended"
+    #     "to use get_logs_path() to define your logs directory."
+    #     "If you set your logs directory manually make sure"
+    #     "to use /logs/ when running on TensorPort cloud.")
+
+    #>>>>>DEBUG
+    flags.DEFINE_string("train_data_dir","/Users/malo/Documents/comma/comma-final/camera/training","")
+    flags.DEFINE_string("logs_dir","/Users/malo/Documents/tensorport-self-driving-demo/logs","")
+    flags.DEFINE_string("val_data_dir","/Users/malo/Documents/tensorport-self-driving-demo/logs","")
+
 
     # Define worker specific environment variables. Handled automatically.
     flags.DEFINE_string("job_name", job_name,
@@ -154,14 +162,21 @@ def main():
         raise ValueError("Must specify an explicit `train_data_dir`")
     if FLAGS.val_data_dir is None or FLAGS.val_data_dir == "":
         raise ValueError("Must specify an explicit `val_data_dir`")
+    if FLAGS.val_data_dir == FLAGS.train_data_dir:
+        warnings.warn("Using same source for training and validation set.", UserWarning)
 
     TIME_LEN = 1 #1 video frame. Other not supported.
 
     # Define graph
     with tf.device(device):
-        X = tf.placeholder(tf.float32, [FLAGS.batch, 3, 160, 320], name="X")
-        Y = tf.placeholder(tf.float32,[FLAGS.batch,1], name="Y") # angle only
-        S = tf.placeholder(tf.float32,[FLAGS.batch,1], name="S") #speed
+
+        reader = H5reader(FLAGS.train_data_dir)
+        x, y, z = reader.tf_read_example()
+        X, Y, S = tf.train.batch([x, y, z], batch_size=FLAGS.batch, num_threads = 1, capacity = 32)
+
+        # arbitrary: 5*batch size. Might be another flag.
+        # q = tf.FIFOQueue(FLAGS.batch*5, [tf.float32, tf.float32], shapes=[[3,160,320], [],[]])
+        # enqueue_op = q.enqueue_many([X, Y, S])
 
         predictions = get_model(X,FLAGS)
         steering_summary = tf.summary.image("green-is-predicted",render_steering_tf(X,Y,S,predictions)) # Adding numpy operation to graph. Adding image to summary
@@ -179,18 +194,18 @@ def main():
 
         global_step = tf.contrib.framework.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,1000, 0.96, staircase=True)
-        
+
         train_step = (
             tf.train.AdamOptimizer(learning_rate)
             .minimize(loss, global_step=global_step)
             )
 
-    def run_train_epoch(target,gen_train,FLAGS,epoch_index):
+    def run_train_epoch(target,FLAGS,epoch_index):
         """Restores the last checkpoint and runs a training epoch
         Inputs:
             - target: device setter for distributed work
-            - FLAGS: 
-                - requires FLAGS.logs_dir from which the model will be restored. 
+            - FLAGS:
+                - requires FLAGS.logs_dir from which the model will be restored.
                 Note that whatever most recent checkpoint from that directory will be used.
                 - requires FLAGS.steps_per_epoch
             - gen_train: training data generator
@@ -206,14 +221,6 @@ def main():
         hooks = hooks) as sess:
 
             while not sess.should_stop():
-                batch_train = gen_train.next()
-
-                feed_dict = {X: batch_train[0],
-                                Y: batch_train[1],
-                                S: batch_train[2]
-                                }
-
-
 
                 variables = [loss, learning_rate, train_step]
                 current_loss, lr, _ = sess.run(variables, feed_dict)
@@ -226,13 +233,13 @@ def main():
         """Restores the last checkpoint and runs validation
         Inputs:
             - target: device setter for distributed work
-            - FLAGS: 
-                - requires FLAGS.logs_dir from which the model will be restored. 
+            - FLAGS:
+                - requires FLAGS.logs_dir from which the model will be restored.
                 Note that whatever most recent checkpoint from that directory will be used.
             - gen_val: validation data generator
         """
         with tf.device("/job:localhost/replica:0/task:0/cpu:0"):
-            sess=tf.Session()  
+            sess=tf.Session()
             saver = tf.train.import_meta_graph('logs/model.ckpt-81.meta')
             saver.restore(sess,tf.train.latest_checkpoint(FLAGS.logs_dir))
             sess.run(tf.local_variables_initializer())
@@ -250,15 +257,8 @@ def main():
                     print("Validation loss: %s" % (current_loss+1))
 
     for e in range(FLAGS.nb_epochs):
-        run_train_epoch(target, gen_train, FLAGS, e)
-        if FLAGS.task_index == 0: #if is_chief. Running val only on master node.
-            run_val(gen_train, FLAGS)
+        run_train_epoch(target, FLAGS, e)
 
 
 if __name__ == "__main__": #Generators don't exit cleanly for some reason (GeneratorExit)
     main()
-
-
-        
-
-    
