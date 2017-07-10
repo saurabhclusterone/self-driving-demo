@@ -49,12 +49,13 @@ or
 $ tport <any_command> --help
 ```
 
-Now that we've checked that the ciode
+Now that we've checked that the code works locally and in a simulated distributed
+mode, let's push it to tensorport to get some real speed up!
 
 
 ## Run on tensorport
 
-1) Clone this repo
+1) Clone this repo [if you skipped part 1]
 
 2) From the repo, run:
 ```bash
@@ -62,7 +63,7 @@ $ tport create project
 Display name:
 $ comma-demo
 Description [Tensorport Project]:
-$Demo of the comma self steering car.
+$ Demo of the comma self steering car.
 Project created successfully
 Waiting for Gitlab Repository
 Saving Tensorport Config File
