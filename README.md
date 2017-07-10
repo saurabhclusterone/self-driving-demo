@@ -38,6 +38,22 @@ $ tport run --local --distributed
 ```
 for simulated multi-node training.
 
+
+We recommend creating a simulated tensorport environment before running on tensorport.
+That will create a new empty environment and load the requirements specified in
+your requirements file (`requirements.txt` in the demo). This is basically the way
+it happens on tensorport, so having that step is a good local check that all the
+required modules will be correctly installed when we'll switch to running remotely.
+You can still use your local environment during development, and only test the
+requirements just before running on tensorport.
+
+
+#TODO: rephrase
+#TODO: insert terminal
+
+
+
+
 For help on the CLI, try:
 ```bash
 $ tport help
