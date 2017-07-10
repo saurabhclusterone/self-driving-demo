@@ -5,7 +5,51 @@ This is a demo of a self-steering car model for the tensorport deep learning com
 
 ## Run locally
 
-#TODO
+1) Get the code by cloning this repository
+
+2) Get the data by downloading this repo.
+
+In the code we assume that the tree is:
+
+Documents/comma/data-repo
+
+Documents/tensorport-self-driving-demo
+
+You will need to change the code in main_tf (search for "snippet2") to update the
+FLAGS to your local arborescence.
+
+
+
+3) The tensorport CLI facilitates local development and debugging by emulating the
+remote environment and simulating distributed tensorflow. Install it with:
+
+```bash
+$ pip install tensorport
+```
+
+Now from your code repo, run:
+
+```bash
+$ tport run --local --single-node
+```
+for single node training and:
+```bash
+$ tport run --local --distributed
+```
+for simulated multi-node training.
+
+For help on the CLI, try:
+```bash
+$ tport help
+```
+
+or
+
+```bash
+$ tport <any_command> --help
+```
+
+Now that we've checked that the ciode
 
 
 ## Run on tensorport
@@ -14,10 +58,10 @@ This is a demo of a self-steering car model for the tensorport deep learning com
 
 2) From the repo, run:
 ```bash
-$ tport create_project
+$ tport create project
 Display name:
 $ comma-demo
-Description [Tensorport Project]: 
+Description [Tensorport Project]:
 $Demo of the comma self steering car.
 Project created successfully
 Waiting for Gitlab Repository
@@ -35,15 +79,15 @@ $ git push tensorport master
 
 5) We are now ready to start distributed training on tensorport. From the CLI (see <#TODO HERE> for the GUI version):
 ``` bash
-$ tport train
-Display name: 
+$ tport create job
+Display name:
 $ first-comma
 Description [Tensorport Job]:
 $ Run the comma demo
 Please select project you want to use or specify --project parameter
 0 | comma-demo | comma-demo
 1 | mnist
-Please select project to use, or type 0 to use latest one: [0]: 
+Please select project to use, or type 0 to use latest one: [0]:
 $ 0
 Project selected: comma-demo
 Please select commit to use in a job, or type 0 to use latest one:
@@ -55,40 +99,48 @@ Please select commit to use in a job, or type 0 to use latest one:
 ...
 $ 0
 Commit selected: #1e8262c318dde1d328883bf34ee22cafdb9149d0
-Please specify python module name to run [main]: 
+Please specify python module name to run [main]:
 $ main_tf
-Please specify python path []: 
+Please specify python path []:
 $
 List of available instance types:
 ......................................
 # | Name | CPU | GPU | Memory(GiB)
-0 | c4.2xlarge | 1 | 0 | 10 
-Please select instance type: 
+0 | c4.2xlarge | 1 | 0 | 10
+Please select instance type:
 $ 0
-How many workers? [1]: 
+How many workers? [1]:
 $ 3
-How many PS replicas? [1]: 
+How many PS replicas? [1]:
 $ 1
-Please specify requirements file: [requirements.txt]: 
-$ 
+Please specify requirements file: [requirements.txt]:
+$
 Do you want to add a dataset to the job? Y/n [n]: y
 Please select dataset you want to use
 0 | comma-public | Public comma repo for comma demo
 $ 0
 Please select commit to use for this dataset in a job, or type 0 to use latest one:
 $ 0
-Please specify the dataset mounting point: []: 
-$ 
-Do you want to add another dataset to the job? Y/n [n]: 
+Please specify the dataset mounting point: []:
+$
+Do you want to add another dataset to the job? Y/n [n]:
 $ n
 Sending Job Create Request
 Job Created Successfully
 Starting job
+```bash
+tport watch
 ```
 
-6) Your job is now running on tensorport! You can access the matrix and view the logs and tensorboard.
+6) Your job is now running on tensorport! You can access the matrix and view the
+logs and tensorboard.
+You can also use the CLI to track what is happening on the server. There is a
+pretty cool command that just listens to the events on the paltform and displays
+them in terminal.
+Try:
+```
 
- 
+
 
 
 ## Dataset
