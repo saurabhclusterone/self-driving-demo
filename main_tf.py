@@ -60,10 +60,17 @@ def main():
     #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on tensorport
     flags.DEFINE_string(
         "train_data_dir",
-        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,path='malo/*/camera/training/*.h5'), #TODO: comma-smallest -> *
+        get_data_path(root=ROOT_PATH_TO_LOCAL_DATA,
+            local_repo="*", #all repos (we use glob downstream, see read_data.py)
+            path='camera/training/*.h5', #all .h5 files
+            tport_repo='*' #all mounted repo
+            ),
         """Path to training dataset. It is recommended to use get_data_path()
         to define your data directory. If you set your dataset directory manually make sure to use /data/
-        as root path when running on TensorPort cloud."""
+        as root path when running on TensorPort cloud.
+        On tensrport, the data will be mounted in /data/user/tport_dataset_name,
+        so you can acces `path` with  /data/user/tport_dataset_name/path
+        """
         )
     flags.DEFINE_string(
         "val_data_dir",
