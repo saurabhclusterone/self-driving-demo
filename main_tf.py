@@ -61,7 +61,7 @@ def main():
     flags.DEFINE_string(
         "train_data_dir",
         get_data_path(
-            dataset_name = "v/*", #all mounted repo
+            dataset_name = "malo/*", #all mounted repo
             local_root = ROOT_PATH_TO_LOCAL_DATA,
             local_repo = "comma-final", #all repos (we use glob downstream, see read_data.py)
             path = 'camera/training/*.h5'#all .h5 files

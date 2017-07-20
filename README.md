@@ -6,7 +6,7 @@ This is a demo of a self-steering car model for the tensorport deep learning com
 ## Run locally
 
 1) Get the data [here](https://s3-us-west-2.amazonaws.com/tppublicdata/comma-train.zip)
-
+Unzip the file, and create a tensorport dataset as explained [here](https://github.com/tensorport/mnist#12-deep-dive-into-dataset-setup).
 2) Get the code by cloning this repo.
 
 In the code we assume that the data tree is:
