@@ -6,6 +6,16 @@
 Runs distributed training of a self-steering car model.
 """
 
+### Before running, make sure you customize these values. The demo won't work if you don't!
+
+# What is your TensorPort username? This should be something like "johndoe", not your email address!
+TENSORPORT_USERNAME = "YOUR USERNAME"
+
+# Where should your local log files be stored? This should be something like "~/Documents/tensorport-self-driving-demo/logs/"
+LOCAL_LOG_LOCATION = "PATH TO YOUR LOCAL LOGS HERE!"
+
+# Where is the dataset located? This should be something like "~/Documents/data/comma"
+LOCAL_DATASET_LOCATION = "PATH TO YOUR DATASET HERE!"
 
 import time
 import os
@@ -45,8 +55,8 @@ def main():
 
     #Path to your data locally. This will enable to run the model both locally and on
     # tensorport without changes
-    PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/tensorport-self-driving-demo/logs/')
-    ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/comma/')
+    PATH_TO_LOCAL_LOGS = os.path.expanduser(LOCAL_LOG_LOCATION)
+    ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser(LOCAL_DATASET_LOCATION)
     #end of tport snippet 1
 
 
@@ -61,7 +71,7 @@ def main():
     flags.DEFINE_string(
         "train_data_dir",
         get_data_path(
-            dataset_name = "tensorport/*", #all mounted repo
+            dataset_name = "%s/*" % TENSORPORT_USERNAME, #all mounted repo
             local_root = ROOT_PATH_TO_LOCAL_DATA,
             local_repo = "comma-final", #all repos (we use glob downstream, see read_data.py)
             path = 'camera/training/*.h5'#all .h5 files
@@ -150,7 +160,7 @@ def main():
 
     print(FLAGS.logs_dir)
     print(FLAGS.train_data_dir)
-    
+
     if FLAGS.logs_dir is None or FLAGS.logs_dir == "":
         raise ValueError("Must specify an explicit `logs_dir`")
     if FLAGS.train_data_dir is None or FLAGS.train_data_dir == "":
@@ -164,19 +174,25 @@ def main():
 
     # Define graph
     with tf.device(device):
-        X = tf.placeholder(tf.float32, [FLAGS.batch, 3, 160, 320], name="X")
-        Y = tf.placeholder(tf.float32,[FLAGS.batch,1], name="Y") # angle only
-        S = tf.placeholder(tf.float32,[FLAGS.batch,1], name="S") #speed
+        # X = tf.placeholder(tf.float32, [FLAGS.batch, 3, 160, 320], name="X")
+        # Y = tf.placeholder(tf.float32,[FLAGS.batch,1], name="Y") # angle only
+        # S = tf.placeholder(tf.float32,[FLAGS.batch,1], name="S") #speed
 
+        if FLAGS.task_index == 0:
+            print("Looking for data in %s" % FLAGS.train_data_dir)
+    	reader = DataReader(FLAGS.train_data_dir)
+    	x, y, s = reader.read_row_tf()
+        x.set_shape((3, 160, 320))
+        y.set_shape((1))
+        s.set_shape((1))
+
+        X, Y, S = tf.train.batch([x,y,s], batch_size = FLAGS.batch)
         predictions = get_model(X,FLAGS)
         steering_summary = tf.summary.image("green-is-predicted",render_steering_tf(X,Y,S,predictions)) # Adding numpy operation to graph. Adding image to summary
         loss = get_loss(predictions,Y)
         training_summary = tf.summary.scalar('Training_Loss', loss)#add to tboard
-        validation_summary = tf.summary.scalar('Validation_Loss', loss)
 
         #Batch generators
-        gen_train = gen(FLAGS.train_data_dir, time_len=FLAGS.time, batch_size=FLAGS.batch, ignore_goods=FLAGS.nogood)
-
         global_step = tf.contrib.framework.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,1000, 0.96, staircase=True)
 
@@ -185,7 +201,7 @@ def main():
             .minimize(loss, global_step=global_step)
             )
 
-    def run_train_epoch(target,gen_train,FLAGS,epoch_index):
+    def run_train_epoch(target,FLAGS,epoch_index):
         """Restores the last checkpoint and runs a training epoch
         Inputs:
             - target: device setter for distributed work
@@ -193,7 +209,6 @@ def main():
                 - requires FLAGS.logs_dir from which the model will be restored.
                 Note that whatever most recent checkpoint from that directory will be used.
                 - requires FLAGS.steps_per_epoch
-            - gen_train: training data generator
             - epoch_index: index of current epoch
         """
 
@@ -206,21 +221,14 @@ def main():
         hooks = hooks) as sess:
 
             while not sess.should_stop():
-                batch_train = gen_train.next()
-
-                feed_dict = {X: batch_train[0],
-                                Y: batch_train[1],
-                                S: batch_train[2]
-                                }
-
                 variables = [loss, learning_rate, train_step]
-                current_loss, lr, _ = sess.run(variables, feed_dict)
+                current_loss, lr, _ = sess.run(variables)
 
                 print("Iteration %s - Batch loss: %s" % ((epoch_index)*FLAGS.steps_per_epoch + i,current_loss))
                 i+=1
 
     for e in range(FLAGS.nb_epochs):
-        run_train_epoch(target, gen_train, FLAGS, e)
+        run_train_epoch(target, FLAGS, e)
 
 
 
