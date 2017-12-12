@@ -18,7 +18,7 @@ Follow the [Getting Started guide](https://docs.tensorport.com/v1.0/docs/getting
 
 To run this project, you need:
 
-- [Python](https://python.org) 3.5 or higher.
+- [Python](https://python.org) 2.7 or 3.5 (or higher).
 - [Git](https://git-scm.com/) and [Git Large File Storage (LFS)](https://git-lfs.github.com/)
 - The tensorflow and tensorport libraries with `pip install tensorflow tensorport`
 - A TensorPort account. Sign up [here](https://tensorport.com) for free if you don't have an account yet.
