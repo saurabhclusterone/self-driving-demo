@@ -25,7 +25,7 @@ To run this project, you need:
 
 ### Create the dataset
 
-The model uses the Comma dataset, download it [here](https://s3-us-west-2.amazonaws.com/tppublicdata/comma-train.zip). Unzip the downloaded file and `cd` into the directory of the data.
+The model uses the Comma dataset, download it [here](https://tensorport-public.s3.amazonaws.com/comma-train.zip). Unzip the downloaded file and `cd` into the directory of the data.
 
 Create a new repository with `git init`.
 
