@@ -20,16 +20,16 @@ import h5py
 ### Before running, make sure you customize these values. The demo won't work if you don't!
 
 # What is your TensorPort username? This should be something like "johndoe", not your email address!
-TENSORPORT_USERNAME = "malo"
+TENSORPORT_USERNAME = ...
 
 # Where should your local log files be stored? This should be something like "~/Documents/tensorport-self-driving-demo/logs/"
-LOCAL_LOG_LOCATION = "~/temp/logs-comma"
+LOCAL_LOG_LOCATION = "..."
 
 # Where is the dataset located? This should be something like "~/Documents/data/" if the dataset is in "~/Documents/data/comma"
-LOCAL_DATASET_LOCATION = "~/Documents/data/comma/"
+LOCAL_DATASET_LOCATION = "..."
 
 # Name of the data folder. In the example above, "comma"
-LOCAL_DATASET_NAME = "comma-final"
+LOCAL_DATASET_NAME = "..."
 
 #tport
 from tensorport import get_data_path, get_logs_path
@@ -56,6 +56,14 @@ def main():
         task_index = 0
         ps_hosts = None
         worker_hosts = None
+
+    if job_name == None: #if running locally
+        if LOCAL_LOG_LOCATION == "...":
+            raise ValueError("LOCAL_LOG_LOCATION needs to be defined")
+        if LOCAL_DATASET_LOCATION == "...":
+            raise ValueError("LOCAL_DATASET_LOCATION needs to be defined")
+        if LOCAL_DATASET_NAME == "...":
+            raise ValueError("LOCAL_DATASET_NAME needs to be defined")
 
     #Path to your data locally. This will enable to run the model both locally and on
     # tensorport without changes
