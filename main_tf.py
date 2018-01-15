@@ -1,6 +1,6 @@
 # MIT License, see LICENSE
-# Copyright (c) 2017 TensorPort
-# Author: Malo Marrec, malo@goodailab.com
+# Copyright (c) 2017 ClusterOne Inc.
+# Author: Malo Marrec, malo@clusterone.com
 
 """
 Runs distributed training of a self-steering car model.
@@ -19,10 +19,10 @@ import h5py
 
 ### Before running, make sure you customize these values. The demo won't work if you don't!
 
-# What is your TensorPort username? This should be something like "johndoe", not your email address!
-TENSORPORT_USERNAME = ...
+# What is your ClusterOne username? This should be something like "johndoe", not your email address!
+CLUSTERONE_USERNAME = ...
 
-# Where should your local log files be stored? This should be something like "~/Documents/tensorport-self-driving-demo/logs/"
+# Where should your local log files be stored? This should be something like "~/Documents/self-driving-demo/logs/"
 LOCAL_LOG_LOCATION = "..."
 
 # Where is the dataset located? This should be something like "~/Documents/data/" if the dataset is in "~/Documents/data/comma"
@@ -31,8 +31,8 @@ LOCAL_DATASET_LOCATION = "..."
 # Name of the data folder. In the example above, "comma"
 LOCAL_DATASET_NAME = "..."
 
-#tport
-from tensorport import get_data_path, get_logs_path
+#clusterone
+from clusterone import get_data_path, get_logs_path
 
 from models.model import *
 from utils.data_reader import *
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 def main():
     """ Main wrapper"""
 
-    # tport snippet 1 - get environment variables
+    # clusterone snippet 1 - get environment variables
     try:
         job_name = os.environ['JOB_NAME']
         task_index = os.environ['TASK_INDEX']
@@ -66,24 +66,24 @@ def main():
             raise ValueError("LOCAL_DATASET_NAME needs to be defined")
 
     #Path to your data locally. This will enable to run the model both locally and on
-    # tensorport without changes
+    # ClusterOne without changes
     PATH_TO_LOCAL_LOGS = os.path.expanduser(LOCAL_LOG_LOCATION)
     ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser(LOCAL_DATASET_LOCATION)
-    #end of tport snippet 1
+    #end of clusterone snippet 1
 
 
     #Flags
     flags = tf.app.flags
     FLAGS = flags.FLAGS
 
-    # tport snippet 2: flags.
+    # clusterone snippet 2: flags.
 
     #Define the path from the root data directory to your data.
-    #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on tensorport
+    #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on ClusterOne
     flags.DEFINE_string(
         "train_data_dir",
         get_data_path(
-            dataset_name = "%s/*" % TENSORPORT_USERNAME, #all mounted repos
+            dataset_name = "%s/*" % CLUSTERONE_USERNAME, #all mounted repos
             local_root = ROOT_PATH_TO_LOCAL_DATA,
             local_repo = LOCAL_DATASET_NAME, #all repos (we use glob downstream, see read_data.py)
             path = 'camera/training/*.h5'#all .h5 files
@@ -91,8 +91,8 @@ def main():
         """Path to training dataset. It is recommended to use get_data_path()
         to define your data directory. If you set your dataset directory manually make sure to use /data/
         as root path when running on TensorPort cloud.
-        On tensrport, the data will be mounted in /data/user/tport_dataset_name,
-        so you can acces `path` with  /data/user/tport_dataset_name/path
+        On tensrport, the data will be mounted in /data/user/clusterone_dataset_name,
+        so you can acces `path` with  /data/user/clusterone_dataset_name/path
         """
         )
     flags.DEFINE_string("logs_dir",
@@ -114,7 +114,7 @@ def main():
     flags.DEFINE_string("worker_hosts", worker_hosts,
                         "Comma-separated list of hostname:port pairs")
 
-    # end of tport snippet 2
+    # end of clusterone snippet 2
 
     # Training flags - feel free to play with that!
     flags.DEFINE_integer("batch",256,"Batch size")
@@ -131,7 +131,7 @@ def main():
     flags.DEFINE_boolean("nogood",False,"Ignore `goods` filters.")
 
 
-    # tport snippet 3: configure distributed environment
+    # clusterone snippet 3: configure distributed environment
     def device_and_target():
         # If FLAGS.job_name is not set, we're running single-machine TensorFlow.
         # Don't set a device.
@@ -168,7 +168,7 @@ def main():
         )
 
     device, target = device_and_target()
-    # end of tport snippet 3
+    # end of clusterone snippet 3
 
     print(FLAGS.logs_dir)
     print(FLAGS.train_data_dir)
