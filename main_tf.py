@@ -6,16 +6,6 @@
 Runs distributed training of a self-steering car model.
 """
 
-### Before running, make sure you customize these values. The demo won't work if you don't!
-
-# What is your TensorPort username? This should be something like "johndoe", not your email address!
-TENSORPORT_USERNAME = "YOUR USERNAME"
-
-# Where should your local log files be stored? This should be something like "~/Documents/tensorport-self-driving-demo/logs/"
-LOCAL_LOG_LOCATION = "PATH TO YOUR LOCAL LOGS HERE!"
-
-# Where is the dataset located? This should be something like "~/Documents/data/comma"
-LOCAL_DATASET_LOCATION = "PATH TO YOUR DATASET HERE!"
 
 import time
 import os
@@ -26,6 +16,20 @@ import glob
 import tensorflow as tf
 import numpy as np
 import h5py
+
+### Before running, make sure you customize these values. The demo won't work if you don't!
+
+# What is your TensorPort username? This should be something like "johndoe", not your email address!
+TENSORPORT_USERNAME = "malo"
+
+# Where should your local log files be stored? This should be something like "~/Documents/tensorport-self-driving-demo/logs/"
+LOCAL_LOG_LOCATION = "~/temp/logs-comma"
+
+# Where is the dataset located? This should be something like "~/Documents/data/" if the dataset is in "~/Documents/data/comma"
+LOCAL_DATASET_LOCATION = "~/Documents/data/comma/"
+
+# Name of the data folder. In the example above, "comma"
+LOCAL_DATASET_NAME = "comma-final"
 
 #tport
 from tensorport import get_data_path, get_logs_path
@@ -71,9 +75,9 @@ def main():
     flags.DEFINE_string(
         "train_data_dir",
         get_data_path(
-            dataset_name = "%s/*" % TENSORPORT_USERNAME, #all mounted repo
+            dataset_name = "%s/*" % TENSORPORT_USERNAME, #all mounted repos
             local_root = ROOT_PATH_TO_LOCAL_DATA,
-            local_repo = "comma-final", #all repos (we use glob downstream, see read_data.py)
+            local_repo = LOCAL_DATASET_NAME, #all repos (we use glob downstream, see read_data.py)
             path = 'camera/training/*.h5'#all .h5 files
             ),
         """Path to training dataset. It is recommended to use get_data_path()
