@@ -93,7 +93,7 @@ You can monitor the execution of your job on ClusterOne using `just watch`.
 
 Instead of running the model from the command line, you can also use ClusterOne's graphical web interface [Matrix](https://clusterone.com/matrix).
 
-For a more detailed guide on how to run this project on ClusterOne, check out the [Getting Started guide](https://docs.clusterone.com/v1.0/docs/getting-started). To learn more about ClusterOne, visit our [website](https://clusterone.com).
+For a more detailed guide on how to run this project on ClusterOne, check out the [Getting Started guide](https://docs.clusterone.com/v1.0/docs/get-started). To learn more about ClusterOne, visit our [website](https://clusterone.com).
 
 ## License
 
