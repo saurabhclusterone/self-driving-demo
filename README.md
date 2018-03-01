@@ -69,13 +69,19 @@ To run the model on ClusterOne, you first need a ClusterOne account. Log in with
 
 Push the project code to ClusterOne with `git push clusterone master`.
 
-When the upload is complete, run the model on ClusterOne using:
+When the upload is complete, create a job to run the model on ClusterOne:
 
 ```bash
 just create job distributed --name first-job --project self-driving \
 --datasets comma --module main_tf --framework-version 1.0.0 \
 --requirements requirements.txt --worker-type p2.xlarge --worker-replicas 3 \
 --ps-type c4.2xlarge --ps-replicas 1 --time-limit 1h
+```
+
+Now the final step is to start the job:
+
+```bash
+just start job -p self-driving/first-job
 ```
 
 You can monitor the execution of your job on ClusterOne using `just watch`.
