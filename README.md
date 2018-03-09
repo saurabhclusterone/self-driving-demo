@@ -26,7 +26,7 @@ To run this project, you need:
 - [Python](https://python.org) 2.7 or 3.5 (or higher).
 - [Git](https://git-scm.com/) and [Git Large File Storage (LFS)](https://git-lfs.github.com/)
 - The TensorFlow Python library. Get it with `pip install tensorflow`
-- The Clusterone Python library. Install it with `pip install clusterone==2.0.0a3`
+- The Clusterone Python library. Install it with `pip install clusterone`
 - A Clusterone account. Sign up [here](https://clusterone.com) for free if you don't have an account yet.
 
 ### Create the dataset
