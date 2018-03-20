@@ -73,9 +73,7 @@ When the upload is complete, create a job to run the model on Clusterone:
 
 ```bash
 just create job distributed --name first-job --project self-driving \
---datasets comma --module main_tf --framework-version 1.0.0 \
---requirements requirements.txt --worker-type p2.xlarge --worker-replicas 3 \
---ps-type c4.2xlarge --ps-replicas 1 --time-limit 1h
+--datasets comma --module main_tf --framework-version tensorflow-1.0.0 --time-limit 1h
 ```
 
 Now the final step is to start the job:
