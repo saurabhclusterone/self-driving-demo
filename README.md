@@ -61,7 +61,7 @@ In [main_tf.py](/main_tf.py), change the flags at the top of the script to their
 
 Running a job on Clusterone is simple with the `just` command line tool that comes included with the Clusterone Python package.
 
-### Run on ClusterOne
+### Run on Clusterone
 
 To run the model on Clusterone, you first need a Clusterone account. Log in with `just login`.
 
