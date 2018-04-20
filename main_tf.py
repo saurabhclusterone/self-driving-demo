@@ -35,8 +35,6 @@ logger = logging.getLogger(__name__)
 PATH_TO_LOCAL_LOGS = os.path.expanduser("~/logs/sdc/")
 ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser("~/data/comma/")
 
-
-
 def main():
     """ Main wrapper"""
 
@@ -161,9 +159,6 @@ def main():
 
     logging.info("Reading data from %s" % FLAGS.train_data_dir)
     logging.info("Writing outputs and logs to %s" % FLAGS.logs_dir)
-
-
-    TIME_LEN = 1 #1 video frame. Other not supported.
 
     # Define graph
     with tf.device(device):
