@@ -1,3 +1,5 @@
+This experiment branch is based on the higher level Experiment class.
+
 # Demo of a Self-Driving Car Steering Model for Clusterone
 
 <p align="center">
