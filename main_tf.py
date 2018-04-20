@@ -28,6 +28,15 @@ from utils.view_steering_model import *
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+# Path to your data locally.
+# Datasets on Clusterone is mounted as /data/username/dataset-name and
+# this code assumes datasets are included at job creation on Clusterone
+PATH_TO_LOCAL_LOGS = os.path.expanduser("~/logs/sdc/")
+ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser("~/data/comma/")
+
+
+
 def main():
     """ Main wrapper"""
 
@@ -43,10 +52,6 @@ def main():
         ps_hosts = None
         worker_hosts = None
 
-    #Path to your data locally. This will enable to run the model both locally and on
-    # ClusterOne without changes
-    PATH_TO_LOCAL_LOGS = os.path.expanduser("~/logs/sdc/")
-    ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser("~/data/comma/")
     #end of clusterone snippet 1
 
     environment = os.environ.get('CLUSTERONE_CLOUD') or os.environ.get('TENSORPORT_CLOUD')
