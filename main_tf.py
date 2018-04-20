@@ -17,20 +17,6 @@ import tensorflow as tf
 import numpy as np
 import h5py
 
-### Before running, make sure you customize these values. The demo won't work if you don't!
-
-# What is your ClusterOne username? This should be something like "johndoe", not your email address!
-CLUSTERONE_USERNAME = ...
-
-# Where should your local log files be stored? This should be something like "~/Documents/self-driving-demo/logs/"
-LOCAL_LOG_LOCATION = "..."
-
-# Where is the dataset located? This should be something like "~/Documents/data/" if the dataset is in "~/Documents/data/comma"
-LOCAL_DATASET_LOCATION = "..."
-
-# Name of the data folder. In the example above, "comma"
-LOCAL_DATASET_NAME = "..."
-
 #clusterone
 from clusterone import get_data_path, get_logs_path
 
@@ -39,7 +25,7 @@ from utils.data_reader import *
 from utils.view_steering_model import *
 
 #Create logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def main():
@@ -57,20 +43,14 @@ def main():
         ps_hosts = None
         worker_hosts = None
 
-    if job_name == None: #if running locally
-        if LOCAL_LOG_LOCATION == "...":
-            raise ValueError("LOCAL_LOG_LOCATION needs to be defined")
-        if LOCAL_DATASET_LOCATION == "...":
-            raise ValueError("LOCAL_DATASET_LOCATION needs to be defined")
-        if LOCAL_DATASET_NAME == "...":
-            raise ValueError("LOCAL_DATASET_NAME needs to be defined")
-
     #Path to your data locally. This will enable to run the model both locally and on
     # ClusterOne without changes
-    PATH_TO_LOCAL_LOGS = os.path.expanduser(LOCAL_LOG_LOCATION)
-    ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser(LOCAL_DATASET_LOCATION)
+    PATH_TO_LOCAL_LOGS = os.path.expanduser("~/logs/sdc/")
+    ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser("~/data/comma/")
     #end of clusterone snippet 1
 
+    environment = os.environ.get('CLUSTERONE_CLOUD') or os.environ.get('TENSORPORT_CLOUD')
+    environment = 'clusterone-cloud' if environment else "local"
 
     #Flags
     flags = tf.app.flags
@@ -82,12 +62,7 @@ def main():
     #We use glob to match any .h5 datasets in Documents/comma locally, or in data/ on ClusterOne
     flags.DEFINE_string(
         "train_data_dir",
-        get_data_path(
-            dataset_name = "%s/*" % CLUSTERONE_USERNAME, #all mounted repos
-            local_root = ROOT_PATH_TO_LOCAL_DATA,
-            local_repo = LOCAL_DATASET_NAME, #all repos (we use glob downstream, see read_data.py)
-            path = 'camera/training/*.h5'#all .h5 files
-            ),
+        "data/*/*/camera/training/*.h5" if environment=="clusterone-cloud" else os.path.join(ROOT_PATH_TO_LOCAL_DATA,"camera/training/*.h5"),
         """Path to training dataset. It is recommended to use get_data_path()
         to define your data directory. If you set your dataset directory manually make sure to use /data/
         as root path when running on TensorPort cloud.
@@ -96,12 +71,11 @@ def main():
         """
         )
     flags.DEFINE_string("logs_dir",
-        get_logs_path(root=PATH_TO_LOCAL_LOGS),
+        "/logs/" if environment=="clusterone-cloud" else PATH_TO_LOCAL_LOGS,
         "Path to store logs and checkpoints. It is recommended"
         "to use get_logs_path() to define your logs directory."
         "If you set your logs directory manually make sure"
         "to use /logs/ when running on TensorPort cloud.")
-
     # Define worker specific environment variables. Handled automatically.
     flags.DEFINE_string("job_name", job_name,
                         "job name: worker or ps")
@@ -113,8 +87,10 @@ def main():
                         "Comma-separated list of hostname:port pairs")
     flags.DEFINE_string("worker_hosts", worker_hosts,
                         "Comma-separated list of hostname:port pairs")
-
     # end of clusterone snippet 2
+
+    logger.info("Reading data from %s " % FLAGS.train_data_dir)
+    logger.info("Writing logs to %s " % FLAGS.logs_dir)
 
     # Training flags - feel free to play with that!
     flags.DEFINE_integer("batch",256,"Batch size")
@@ -136,7 +112,7 @@ def main():
         # If FLAGS.job_name is not set, we're running single-machine TensorFlow.
         # Don't set a device.
         if FLAGS.job_name is None:
-            print("Running single-machine training")
+            logging.info("Running single-machine training")
             return (None, "")
 
         # Otherwise we're running distributed TensorFlow.
@@ -170,8 +146,6 @@ def main():
     device, target = device_and_target()
     # end of clusterone snippet 3
 
-    print(FLAGS.logs_dir)
-    print(FLAGS.train_data_dir)
 
     if FLAGS.logs_dir is None or FLAGS.logs_dir == "":
         raise ValueError("Must specify an explicit `logs_dir`")
@@ -180,6 +154,8 @@ def main():
     # if FLAGS.val_data_dir is None or FLAGS.val_data_dir == "":
     #     raise ValueError("Must specify an explicit `val_data_dir`")
 
+    logging.info("Reading data from %s" % FLAGS.train_data_dir)
+    logging.info("Writing outputs and logs to %s" % FLAGS.logs_dir)
 
 
     TIME_LEN = 1 #1 video frame. Other not supported.
@@ -190,8 +166,6 @@ def main():
         # Y = tf.placeholder(tf.float32,[FLAGS.batch,1], name="Y") # angle only
         # S = tf.placeholder(tf.float32,[FLAGS.batch,1], name="S") #speed
 
-        if FLAGS.task_index == 0:
-            print("Looking for data in %s" % FLAGS.train_data_dir)
     	reader = DataReader(FLAGS.train_data_dir)
     	x, y, s = reader.read_row_tf()
         x.set_shape((3, 160, 320))
@@ -205,7 +179,7 @@ def main():
         training_summary = tf.summary.scalar('Training_Loss', loss)#add to tboard
 
         #Batch generators
-        global_step = tf.contrib.framework.get_or_create_global_step()
+        global_step = tf.train.get_or_create_global_step()#tf.contrib.framework.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(FLAGS.starter_lr, global_step,1000, 0.96, staircase=True)
 
         train_step = (
