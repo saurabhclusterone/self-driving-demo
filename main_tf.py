@@ -20,7 +20,7 @@ import h5py
 ### Before running, make sure you customize these values. The demo won't work if you don't!
 
 # What is your ClusterOne username? This should be something like "johndoe", not your email address!
-CLUSTERONE_USERNAME = ...
+CLUSTERONE_USERNAME = "..."
 
 # Where should your local log files be stored? This should be something like "~/Documents/self-driving-demo/logs/"
 LOCAL_LOG_LOCATION = "..."
@@ -83,7 +83,7 @@ def main():
     flags.DEFINE_string(
         "train_data_dir",
         get_data_path(
-            dataset_name = "%s/*" % CLUSTERONE_USERNAME, #all mounted repos
+            dataset_name = "gorman/*",
             local_root = ROOT_PATH_TO_LOCAL_DATA,
             local_repo = LOCAL_DATASET_NAME, #all repos (we use glob downstream, see read_data.py)
             path = 'camera/training/*.h5'#all .h5 files
@@ -117,10 +117,10 @@ def main():
     # end of clusterone snippet 2
 
     # Training flags - feel free to play with that!
-    flags.DEFINE_integer("batch",256,"Batch size")
-    flags.DEFINE_integer("time",1,"Number of frames per sample")
-    flags.DEFINE_integer("steps_per_epoch",10000,"Number of training steps per epoch")
-    flags.DEFINE_integer("nb_epochs",200,"Number of epochs")
+    flags.DEFINE_integer("batch", 64, "Batch size")
+    flags.DEFINE_integer("time", 1, "Number of frames per sample")
+    flags.DEFINE_integer("steps_per_epoch", 10000, "Number of training steps per epoch")
+    flags.DEFINE_integer("nb_epochs", 200, "Number of epochs")
 
 
     # Model flags - feel free to play with that!
