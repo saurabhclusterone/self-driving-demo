@@ -10,7 +10,7 @@
 This is a basic self-steering car model implemented in TensorFlow. It is used as a demo project to get started with the [Clusterone](https://clusterone.com) deep learning computation platform.
 
 
-Follow the [Getting Started guide](https://docs.clusterone.com/docs/get-started) for Clusterone and read the author's blog post about building this demo [here](https://medium.com/towards-data-science/what-i-learnt-building-a-simple-self-steering-car-in-tensorflow-c8d7cab6f6d) and [here](https://medium.com/@malomarrec/how-to-write-distributed-tensorflow-code-with-an-example-on-tensorport-70bf3306adcb).
+Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for Clusterone and read the author's blog post about building this demo [here](https://clusterone.com/blog/2017/08/07/self-driving-car-tensorflow/).
 
 
 ## Table of Contents
