@@ -51,7 +51,7 @@ just create job distributed --name first-job --project self-driving-demo \
 Now the final step is to start the job:
 
 ```bash
-just start job -p self-driving/first-job
+just start job -p self-driving-demo/first-job
 ```
 
 You can monitor the execution of your job on Clusterone using `just get events`.
