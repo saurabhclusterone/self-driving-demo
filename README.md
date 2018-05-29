@@ -58,7 +58,7 @@ You can monitor the execution of your job on Clusterone using `just get events`.
 
 Instead of running the model from the command line, you can also use Clusterone's graphical web interface [Matrix](https://clusterone.com/matrix).
 
-For a more detailed guide on how to run this project on Clusterone, check out the [Getting Started guide](https://docs.clusterone.com/docs/get-started). To learn more about Clusterone, visit our [website](https://clusterone.com).
+For a more detailed guide on how to run this project on Clusterone, check out the [Getting Started guide](https://docs.clusterone.com/get-started). To learn more about Clusterone, visit our [website](https://clusterone.com).
 
 ## License
 
