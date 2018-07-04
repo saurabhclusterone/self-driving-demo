@@ -27,7 +27,7 @@ To run this project, you need:
 - [Git](https://git-scm.com/) and [Git Large File Storage (LFS)](https://git-lfs.github.com/)
 - The TensorFlow Python library. Get it with `pip install tensorflow`
 - The Clusterone Python library. Install it with `pip install clusterone`
-- A Clusterone account. Sign up [here](https://clusterone.com) for free if you don't have an account yet.
+- A Clusterone account. [Join the waitlist](https://clusterone.com/join-waitlist/) if you don't have an account yet.
 
 ## Usage
 
